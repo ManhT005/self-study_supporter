@@ -39,6 +39,7 @@ _venv/
 # Tuyệt đối không đẩy file chứa API Keys lên Git
 .env
 .env.local
+.env.example
 .env.*
 secrets.toml
 config.ini
@@ -60,11 +61,7 @@ vector_store/
 # 4. USER DATA & UPLOADS (TÀI LIỆU PDF/SLIDE)
 # ==========================================
 
-data/uploads/*
-data/temp/*
-
-!data/uploads/.gitkeep
-!data/temp/.gitkeep
+data
 
 # ==========================================
 # 5. IDE CONFIGURATIONS & OS FILES
