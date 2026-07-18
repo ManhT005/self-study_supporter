@@ -83,3 +83,9 @@ Thumbs.db
 .coverage
 htmlcov/
 *.log
+
+# ==========================================
+# 7. LEARN
+# ==========================================
+rag/sprint1_rag.txt
+rag/sprint1_notes.md

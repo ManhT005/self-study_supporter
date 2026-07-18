@@ -1,9 +1,8 @@
+import hashlib
 import re
 import numpy as np
-import uuid
 from src.rag.schemas import Chunk, DocumentPage, SentenceUnit
-from google import genai
-from google.genai.types import EmbedContentConfig
+from src.rag.embedding_provider import EmbeddingProvider
 
 
 # Ý tưởng thuật toán: Semantic Chunking bằng Breakpoint Detection
@@ -60,20 +59,12 @@ def flatten_pages_to_sentences(pages: list[DocumentPage]) -> list[SentenceUnit]:
     return all_sentences
 
 
-def embed_sentences(sentences: list[SentenceUnit], client: genai.Client) -> list[SentenceUnit]:
-    """
-    Gọi Gemini embed_content cho từng câu, gán ngược vào SentenceUnit.embedding.
-    """
-    for sentence in sentences:
-        result = client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=sentence.text,
-            config=EmbedContentConfig(
-                task_type="SEMANTIC_SIMILARITY",
-                output_dimensionality=768,
-            ),
-        )
-        sentence.embedding = result.embeddings[0].values
+# embed_sentences trong chunker.py
+def embed_sentences(sentences: list[SentenceUnit], provider: EmbeddingProvider) -> list[SentenceUnit]:
+    texts = [s.text for s in sentences]
+    vectors = provider.embed(texts, task_type="SEMANTIC_SIMILARITY")
+    for s, v in zip(sentences, vectors):
+        s.embedding = v
     return sentences
 
 
@@ -112,12 +103,21 @@ def compute_breakpoints(
 
 
 def _make_chunk(sentence_group: list[SentenceUnit]) -> Chunk:
+    text = " ".join(s.text for s in sentence_group)
+    source = sentence_group[0].source
+    page_start = sentence_group[0].page_number
+    page_end = sentence_group[-1].page_number
+
+    # Hash từ nội dung + vị trí -> cùng 1 tài liệu chạy lại sẽ luôn ra cùng chunk_id
+    raw_key = f"{source}-{page_start}-{page_end}-{text}"
+    chunk_id = hashlib.md5(raw_key.encode("utf-8")).hexdigest()[:12]
+
     return Chunk(
-        chunk_id=str(uuid.uuid4())[:8],
-        source=sentence_group[0].source,
-        page_start=sentence_group[0].page_number,
-        page_end=sentence_group[-1].page_number,
-        text=" ".join(s.text for s in sentence_group),
+        chunk_id=chunk_id,
+        source=source,
+        page_start=page_start,
+        page_end=page_end,
+        text=text,
         sentence_count=len(sentence_group),
     )
 
