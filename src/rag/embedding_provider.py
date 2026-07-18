@@ -33,6 +33,20 @@ def _extract_retry_delay(e, default: float = 30.0) -> float:
     return default
 
 
+def _get_quota_period(e) -> str:
+    """Trả về 'day' hoặc 'minute' dựa trên quotaId, để quyết định có nên retry hay không."""
+    try:
+        details = e.response_json.get("error", {}).get("details", [])
+        for d in details:
+            quota_id = d.get("violations", [{}])[0].get("quotaId", "")
+            if "PerDay" in quota_id:
+                return "day"
+            if "PerMinute" in quota_id:
+                return "minute"
+    except Exception:
+        pass
+    return "unknown"
+
 class EmbeddingProvider(ABC):
     """Interface chung — mọi nơi trong pipeline chỉ nói chuyện qua interface này."""
 
@@ -73,7 +87,15 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
                     all_embeddings.extend([e.values for e in result.embeddings])
                     break
                 except self._ClientError as e:
-                    if getattr(e, "status_code", None) == 429 and attempt < self.max_retries - 1:
+                    if getattr(e, "status_code", None) != 429:
+                        raise
+                    period = _get_quota_period(e)
+                    if period == "day":
+                        raise RuntimeError(
+                            "❌ Hết quota embedContent theo NGÀY (free tier). "
+                            "Đổi sang LocalEmbeddingProvider hoặc đợi reset."
+                        ) from e
+                    if attempt < self.max_retries - 1:
                         wait = _extract_retry_delay(e)
                         print(f"429 (batch {i//self.batch_size}), đợi {wait:.1f}s...")
                         time.sleep(wait)
