@@ -18,7 +18,12 @@ class LLMAdapter(ABC):
     """
 
     @abstractmethod
-    def chat(self, messages: list[dict], system_prompt: str | None = None) -> ChatResponse:
+    def chat(
+        self,
+        messages: list[dict],
+        system_prompt: str | None = None,
+        stop_sequences: list[str] | None = None,
+    ) -> ChatResponse:
         """
         messages: [{"role": "user"|"assistant", "content": str}, ...]
         Trả về ChatResponse, không phải str thô — để mở rộng thêm field

@@ -29,9 +29,12 @@ class GeminiClient(LLMAdapter):
             contents.append({"role": role, "parts": [{"text": m["content"]}]})
         return contents
 
-    def chat(self, messages: list[dict], system_prompt: str | None = None) -> ChatResponse:
+    def chat(self, messages, system_prompt=None, stop_sequences=None) -> ChatResponse:
         contents = self._to_gemini_contents(messages)
-        config = GenerateContentConfig(system_instruction=system_prompt) if system_prompt else None
+        config = GenerateContentConfig(
+            system_instruction=system_prompt,
+            stop_sequences=stop_sequences,   # <-- thêm dòng này
+        )
 
         for attempt in range(self.max_retries):
             self.rate_limiter.wait_if_needed()

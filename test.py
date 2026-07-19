@@ -1,44 +1,61 @@
 import os
+import json
 from dotenv import load_dotenv
 from google import genai
+
+from src.agent.orchestrator import ReActOrchestrator
+from src.agent.prompt_templates import build_react_system_prompt
+from src.agent.state import AgentState
+from src.agent.tools.generate_quiz import GenerateQuizTool
+from src.agent.tools.get_progress import GetProgressTool
+from src.agent.tools.save_note import SaveNoteTool
 from src.llm.gemini_client import GeminiClient
 from src.llm.ollama_client import OllamaClient
+from src.rag.vector_store import VectorStore
+from src.rag.bm25_index import BM25Index
+from src.rag.embedding_provider import GeminiEmbeddingProvider, LocalEmbeddingProvider  # hoặc LocalEmbeddingProvider
+from src.agent.tools.search_docs import SearchDocsTool
 
 load_dotenv()
 
-messages = [{"role": "user", "content": "Việt Nam có bao nhiêu tỉnh thành?"}]
+# gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# provider = GeminiEmbeddingProvider(gemini_client)
+# provider = LocalEmbeddingProvider()
 
-gemini = GeminiClient(
-    genai.Client(api_key=os.getenv("GEMINI_API_KEY")),
-    model="gemini-3-flash-preview",
-)
-# res = gemini.chat(messages)
-# print("Gemini:", res.text)
-# print("Usage:", res.usage, "| finish_reason:", res.finish_reason)
 
-print()
+# --- Test AgentState ---
+store = VectorStore()
+chunks = store.load_all_chunks()
+bm25_index = BM25Index(chunks)
 
-ollama = OllamaClient()
-# res2 = ollama.chat(messages)
-# print("Ollama:", res2.text)
-# print("Usage:", res2.usage, "| finish_reason:", res2.finish_reason)
+provider = LocalEmbeddingProvider()  # <-- khớp với DB hiện tại (1024 chiều)
 
-questions = [
-    "Việt Nam có bao nhiêu tỉnh thành?",
-    "Giải thích ngắn gọn thuật toán sắp xếp nổi bọt (bubble sort).",
-    "Con người có bao nhiêu xương?",
-]
+def embed_query_fn(query: str) -> list[float]:
+    return provider.embed([query], task_type="RETRIEVAL_QUERY")[0]
 
-for q in questions:
-    messages = [{"role": "user", "content": q}]
+tool = SearchDocsTool(store, bm25_index, embed_query_fn)
 
-    import time
-    t0 = time.time()
-    res_gemini = gemini.chat(messages)
-    t1 = time.time()
-    res_ollama = ollama.chat(messages)
-    t2 = time.time()
+# Gemini chỉ dùng cho chat, KHÔNG dùng cho embedding
+# gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-    print(f"\n=== {q} ===")
-    print(f"Gemini ({t1-t0:.1f}s): {res_gemini.text[:150]}")
-    print(f"Ollama ({t2-t1:.1f}s): {res_ollama.text[:150]}")
+# llm = GeminiClient(gemini_client, model="gemini-3-flash-preview")
+
+llm = OllamaClient()
+
+quiz_tool = GenerateQuizTool(llm)
+note_tool = SaveNoteTool()
+progress_tool = GetProgressTool()
+
+orchestrator = ReActOrchestrator(llm, tools=[tool, quiz_tool, note_tool, progress_tool])
+
+# Test 1: câu hỏi tra cứu -> kỳ vọng gọi search_docs
+state1 = orchestrator.run("Đơn vị đo thông tin là gì?")
+print("=== Test 1 (nên gọi search_docs) ===")
+print(state1.render_scratchpad())
+print("\n\nFinal:", state1.final_answer)
+
+# Test 2: yêu cầu quiz -> kỳ vọng gọi search_docs trước (lấy nội dung) rồi generate_quiz
+state2 = orchestrator.run("Cho tôi 1 câu hỏi trắc nghiệm về đơn vị đo thông tin - bit")
+print("\n=== Test 2 (nên gọi search_docs -> generate_quiz) ===")
+print(state2.render_scratchpad())
+print("\n\nFinal:", state2.final_answer)

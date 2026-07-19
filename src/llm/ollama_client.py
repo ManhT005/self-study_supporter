@@ -7,21 +7,18 @@ class OllamaClient(LLMAdapter):
         self.model = model
         self.base_url = base_url
 
-    def chat(self, messages: list[dict], system_prompt: str | None = None) -> ChatResponse:
+    def chat(self, messages, system_prompt=None, stop_sequences=None) -> ChatResponse:
         ollama_messages = []
         if system_prompt:
             ollama_messages.append({"role": "system", "content": system_prompt})
         ollama_messages.extend(messages)
 
-        response = requests.post(
-            f"{self.base_url}/api/chat",
-            json={
-                "model": self.model,
-                "messages": ollama_messages,
-                "stream": False,
-            },
-            timeout=300,  # model local có thể chậm, nhất là lần đầu load vào VRAM/RAM
-        )
+        payload = {"model": self.model, "messages": ollama_messages, "stream": False}
+        if stop_sequences:
+            payload["options"] = {"stop": stop_sequences}   # <-- thêm
+
+        response = requests.post(f"{self.base_url}/api/chat", json=payload, timeout=120)
+        
         response.raise_for_status()
         data = response.json()
 
