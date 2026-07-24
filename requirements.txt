@@ -1,6 +1,0 @@
-google-generativeai
-python-dotenv
-pymupdf
-chromadb
-rank-bm25
-pydantic

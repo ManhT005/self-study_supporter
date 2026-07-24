@@ -1,9 +1,5 @@
 from src.agent.tools.base import BaseTool
-
-# Lưu tạm trong RAM — mất khi tắt chương trình. Sprint 4 sẽ thay bằng
-# ChromaDB collection "user_memory" với đúng interface run() này, không
-# cần sửa orchestrator.py hay cách Agent gọi tool.
-_notes_store: dict[str, list[str]] = {}
+from src.memory.long_term import LongTermMemory
 
 
 class SaveNoteTool(BaseTool):
@@ -14,6 +10,9 @@ class SaveNoteTool(BaseTool):
         "note": "Nội dung ghi chú cần lưu",
     }
 
+    def __init__(self, long_term_memory: LongTermMemory):
+        self.long_term_memory = long_term_memory
+
     def run(self, user_id: str, note: str) -> str:
-        _notes_store.setdefault(user_id, []).append(note)
-        return f"Đã lưu ghi chú cho user '{user_id}': {note}"
+        note_id = self.long_term_memory.save_note(user_id, note)
+        return f"Đã lưu ghi chú (id: {note_id}) cho học sinh '{user_id}': {note}"
