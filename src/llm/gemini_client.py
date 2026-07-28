@@ -22,7 +22,6 @@ class GeminiClient(LLMAdapter):
         self.rate_limiter = RateLimiter(max_calls=max_calls, period=period)
 
     def _to_gemini_contents(self, messages: list[dict]) -> list[dict]:
-        """Gemini dùng role 'model' thay vì 'assistant' — cần convert."""
         contents = []
         for m in messages:
             role = "model" if m["role"] == "assistant" else m["role"]
@@ -31,19 +30,27 @@ class GeminiClient(LLMAdapter):
 
     def chat(self, messages, system_prompt=None, stop_sequences=None) -> ChatResponse:
         contents = self._to_gemini_contents(messages)
-        config = GenerateContentConfig(
+        config = GenerateContentConfig(         
             system_instruction=system_prompt,
-            stop_sequences=stop_sequences,   # <-- thêm dòng này
+            stop_sequences=stop_sequences,
         )
 
         for attempt in range(self.max_retries):
             self.rate_limiter.wait_if_needed()
             try:
                 response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=config,
+                    model=self.model, contents=contents, config=config,
                 )
+
+                finish_reason = None
+                if response.candidates:
+                    finish_reason = response.candidates[0].finish_reason.name
+
+                text = response.text if response.text is not None else ""
+
+                if not text:
+                    print(f"⚠️ response.text rỗng/None. finish_reason: {finish_reason}")
+
                 usage = None
                 if response.usage_metadata:
                     usage = {
@@ -51,18 +58,10 @@ class GeminiClient(LLMAdapter):
                         "output_tokens": response.usage_metadata.candidates_token_count,
                         "total_tokens": response.usage_metadata.total_token_count,
                     }
-                finish_reason = None
-                if response.candidates:
-                    finish_reason = response.candidates[0].finish_reason.name
 
-                return ChatResponse(
-                    text=response.text,
-                    usage=usage,
-                    finish_reason=finish_reason,
-                    raw=response,
-                )
+                return ChatResponse(text=text, usage=usage, finish_reason=finish_reason, raw=response)
 
-            except ClientError as e:
+            except ClientError as e:              
                 if getattr(e, "status_code", None) != 429:
                     raise
 
