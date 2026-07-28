@@ -77,6 +77,8 @@ class ReActOrchestrator:
            (ví dụ dùng dấu nháy đơn thay vì nháy kép) -> nếu lỗi, trả về type "invalid".
         3. Nếu không khớp cả 2 -> trả về type "invalid".
         """
+        if not text:   # bắt cả None và string rỗng ""
+            return {"type": "invalid", "raw": text or ""}
         # 1. Parse Thought (nếu có)
         thought = ""
         thought_match = re.search(
@@ -121,15 +123,18 @@ class ReActOrchestrator:
 
         return {"type": "invalid", "raw": text}
 
-    def run(self, user_query: str) -> AgentState:
+    def run(self, user_query: str, conversation_history: str | None = None) -> AgentState:
         state = AgentState(user_query=user_query)
+
+        context_note = ""
+        if conversation_history:
+            context_note = f"\n\n[Ngữ cảnh: các câu hỏi-trả lời trước đó của học sinh]\n{conversation_history}\n"
 
         while not state.is_done and not state.is_max_iterations_reached():
             state.iteration += 1
-            print(f"\n{'='*15} ITERATION {state.iteration} {'='*15}")
-
             scratchpad_text = state.render_scratchpad()
-            user_content = f"Câu hỏi: {user_query}"
+            user_content = f"Câu hỏi: {user_query}{context_note}"
+
             if scratchpad_text:
                 user_content += f"\n\n{scratchpad_text}"
 
@@ -139,17 +144,8 @@ class ReActOrchestrator:
                 stop_sequences=["Observation:"],
             )
 
-            print("--- RAW RESPONSE (nguyên văn từ LLM) ---")
-            print(repr(response.text))   # dùng repr() để thấy rõ cả ký tự \n, khoảng trắng thừa
-            print("--- END RAW ---")
-
-            parsed = self.parse_llm_output(response.text)
-            print("--- PARSED ---", parsed)
-
-            # ... phần xử lý parsed["type"] giữ nguyên như cũ
             parsed = self.parse_llm_output(response.text)
 
-            # 4. Xử lý theo loại kết quả parse được
             if parsed["type"] == "final_answer":
                 if parsed["thought"]:
                     state.add_thought(parsed["thought"])

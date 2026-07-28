@@ -2,7 +2,7 @@ import json
 import re
 
 from pydantic import ValidationError
-from src.llm.json_ultis import parse_llm_model
+from src.llm.json_utils import parse_llm_model
 from src.llm.llm_adapter import LLMAdapter
 from src.graph.schemas import ConceptGraph
 
