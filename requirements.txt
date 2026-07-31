@@ -1,6 +1,11 @@
-google-generativeai
+google-genai
 python-dotenv
 pymupdf
 chromadb
 rank-bm25
 pydantic
+sentence-transformers
+networkx
+sqlalchemy
+streamlit
+requests

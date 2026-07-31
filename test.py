@@ -44,7 +44,7 @@ tool = SearchDocsTool(store, bm25_index, embed_query_fn)
 
 # llm = GeminiClient(gemini_client, model="gemini-3-flash-preview")
 
-llm = OllamaClient()
+llm = OllamaClient(model="qwen3:4b")
 
 quiz_tool = GenerateQuizTool(llm)
 
