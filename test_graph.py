@@ -18,11 +18,11 @@ store = VectorStore()
 chunks = store.load_all_chunks()
 bm25_index = BM25Index(chunks)
 
-gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-llm = GeminiClient(gemini_client, model="gemini-3-flash-preview")
+# llm = GeminiClient(gemini_client, model="gemini-3-flash-preview")
 
-# llm = OllamaClient()
+llm = OllamaClient()
 
 
 # Lấy vài chunk đầu từ store đã có, hoặc gọi search_docs với truy vấn tổng quát

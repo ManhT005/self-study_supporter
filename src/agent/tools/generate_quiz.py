@@ -1,10 +1,9 @@
-import json
 import re
 
 from pydantic import BaseModel, Field, ValidationError
 
 from src.agent.tools.base import BaseTool
-from src.llm.json_utils import parse_llm_model
+from src.llm.json_utils import chat_and_parse_model
 from src.llm.llm_adapter import LLMAdapter
 
 
@@ -29,50 +28,43 @@ class GenerateQuizTool(BaseTool):
 
     param_descriptions = {
         "topic_content": "Nội dung/đoạn văn bản làm cơ sở để sinh câu hỏi trắc nghiệm",
-        "num_questions": "Số lượng câu hỏi cần sinh (mặc định 1)",
+        "num_questions": "Số lượng câu hỏi cần sinh ",
     }
 
     def __init__(self, llm: LLMAdapter):
         self.llm = llm
+        self.last_prompt: str | None = None
 
     def run(self, topic_content: str, num_questions: int = 1) -> str:
         prompt = f"""
-Dựa trên nội dung sau, hãy sinh ra {num_questions} câu hỏi trắc nghiệm.
+    Dựa trên nội dung sau, hãy sinh ra {num_questions} câu hỏi trắc nghiệm.
 
-Nội dung:
-{topic_content}
+    Nội dung:
+    {topic_content}
 
-Yêu cầu:
-- Mỗi câu có đúng 4 đáp án.
-- Chỉ có 1 đáp án đúng.
-- correct_answer_index đánh số từ 0 đến 3.
-- explanation giải thích ngắn gọn đáp án đúng.
+    Yêu cầu:
+    - Mỗi câu có đúng 4 đáp án.
+    - Chỉ có 1 đáp án đúng.
+    - correct_answer_index đánh số từ 0 đến 3.
+    - explanation giải thích ngắn gọn đáp án đúng.
 
-Chỉ trả về JSON, KHÔNG thêm markdown code fence, đúng format:
+    Chỉ trả về JSON, KHÔNG thêm markdown code fence, đúng format:
 
-{{
-  "questions": [
     {{
-      "question": "...",
-      "options": ["A", "B", "C", "D"],
-      "correct_answer_index": 0,
-      "explanation": "..."
+    "questions": [
+        {{
+        "question": "...",
+        "options": ["A", "B", "C", "D"],
+        "correct_answer_index": 0,
+        "explanation": "..."
+        }}
+    ]
     }}
-  ]
-}}
-"""
-
-        response = self.llm.chat(
-            [
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ]
-        )
+    """
+        self.last_prompt = prompt
 
         try:
-            quiz = parse_llm_model(response.text, QuizList)
+            quiz = chat_and_parse_model(self.llm, prompt, QuizList, max_retries=2)
 
             for q in quiz.questions:
                 q.options = [
@@ -80,9 +72,9 @@ Chỉ trả về JSON, KHÔNG thêm markdown code fence, đúng format:
                     for opt in q.options
                 ]
 
-        except (json.JSONDecodeError, ValidationError, TypeError) as e:
+        except Exception as e:
             return (
-                f"Lỗi: không sinh được quiz hợp lệ ({e}). "
+                f"Lỗi: không sinh được quiz hợp lệ sau nhiều lần thử ({e}). "
                 "Thử lại với nội dung khác hoặc ít câu hỏi hơn."
             )
 
@@ -206,4 +198,3 @@ Chỉ trả về JSON, KHÔNG thêm markdown code fence, đúng format:
 #         """Loại bỏ tiền tố dạng 'A. '/'B) '/'C: ' nếu model tự ý thêm vào, tránh trùng lặp
 #         khi format lại với ký tự đáp án ở bước sau."""
 #         return re.sub(r"^[A-D][\.\):]\s*", "", option.strip())
-

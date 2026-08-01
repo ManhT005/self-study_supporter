@@ -107,11 +107,17 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
 class LocalEmbeddingProvider(EmbeddingProvider):
     """Chạy local/Kaggle bằng sentence-transformers, không rate limit, không tốn tiền."""
 
-    def __init__(self, model_name: str = "BAAI/bge-m3"):
+    def __init__(self, model_name: str = "BAAI/bge-m3", batch_size: int = 64):
         from sentence_transformers import SentenceTransformer
         self.model = SentenceTransformer(model_name)
+        self.batch_size = batch_size
 
     def embed(self, texts: list[str], task_type: str) -> list[list[float]]:
         # bge-m3 không phân biệt task_type qua tham số, mà qua prefix câu (tùy chọn nâng cao sau)
-        vectors = self.model.encode(texts, normalize_embeddings=True)
+        vectors = self.model.encode(
+            texts,
+            batch_size=self.batch_size,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
         return vectors.tolist()

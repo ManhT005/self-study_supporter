@@ -1,5 +1,4 @@
 import json
-import re
 
 from pydantic import ValidationError
 from src.llm.json_utils import parse_llm_model
@@ -25,18 +24,11 @@ Giới hạn tối đa 10 khái niệm chính, không cần quá chi tiết.
 
 def build_concept_graph(content: str, llm: LLMAdapter) -> ConceptGraph:
     prompt = GRAPH_EXTRACTION_PROMPT.format(content=content)
-    response = llm.chat([{"role": "user", "content": prompt}])
 
-    # TODO:
-    # 1. Dọn markdown code fence nếu có (tái sử dụng logic giống
-    #    GenerateQuizTool._strip_markdown_fence — cân nhắc tách thành hàm
-    #    dùng chung ở đâu đó thay vì copy-paste, ví dụ src/llm/json_utils.py)
-    # 2. json.loads(...) -> dict
-    # 3. ConceptGraph(**dict đó) -> validate qua Pydantic
-    # 4. Bọc try/except (json.JSONDecodeError, ValidationError) -> nếu lỗi,
-    #    trả về ConceptGraph rỗng (nodes=[], edges=[]) thay vì crash toàn bộ
-    #    pipeline upload tài liệu chỉ vì graph extraction thất bại
+    response = llm.chat([{"role": "user", "content": prompt}])
     try:
-        return parse_llm_model(response.text, ConceptGraph)   # <-- .text đã sửa
-    except (json.JSONDecodeError, ValidationError):
-        return ConceptGraph(nodes=[], edges=[])
+        return parse_llm_model(response.text, ConceptGraph)
+    except Exception as e:
+        raise RuntimeError(
+            f"Graph extraction failed: {e}. Model response: {response.text}"
+        ) from e

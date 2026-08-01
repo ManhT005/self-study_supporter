@@ -1,38 +1,55 @@
 import os
+from dataclasses import dataclass
+from typing import Callable
+
 import fitz  # PyMuPDF
 from src.rag.schemas import DocumentPage
 
-def parse_pdf(file_path: str) -> list[DocumentPage]:
+
+@dataclass
+class ParseResult:
+    """Kết quả parse PDF — bao gồm cả metadata cho UI progress."""
+    pages: list[DocumentPage]
+    total_pages: int        # tổng số trang trong file (kể cả trang trắng)
+    skipped_pages: int      # số trang bị bỏ qua (trắng)
+
+
+def parse_pdf(
+    file_path: str,
+    on_progress: Callable[[int, int], None] | None = None,
+) -> ParseResult:
     """
-    Đọc file PDF, trả về danh sách DocumentPage (1 phần tử/trang).
+    Đọc file PDF, trả về ParseResult chứa danh sách DocumentPage
+    (1 phần tử/trang có nội dung) cùng metadata.
+
+    on_progress(current_page, total_pages): callback cập nhật UI.
     """
     doc = fitz.open(file_path)
+    total_pages = len(doc)
     pages = []
-
-    # TODO: lặp qua từng trang trong `doc`
-    #   - lấy text bằng page.get_text()
-    #   - bỏ qua trang có text rỗng/toàn khoảng trắng (tránh trang bìa trắng, trang trắng giữa chương)
-    #   - tạo DocumentPage với source = tên file (dùng os.path.basename), page_number bắt đầu từ 1
-    #   - append vào `pages`
+    skipped = 0
 
     source = os.path.basename(file_path)
-    
+
     for i, page in enumerate(doc):
         text = page.get_text()
 
+        if on_progress:
+            on_progress(i + 1, total_pages)
+
         if not text.strip():
+            skipped += 1
             continue
 
         page_data = DocumentPage(
-            source= source,
-            page_number= i+1,
-            text= text
+            source=source,
+            page_number=i + 1,
+            text=text,
         )
-
         pages.append(page_data)
 
     doc.close()
-    return pages
+    return ParseResult(pages=pages, total_pages=total_pages, skipped_pages=skipped)
 
 
 # Bạn dùng text.strip() để check rỗng nhưng lưu text gốc (chưa strip) vào page_data 
