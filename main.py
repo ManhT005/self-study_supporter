@@ -1,10 +1,14 @@
+import os
+
 from dotenv import load_dotenv
 load_dotenv()
 
+print("DEBUG - DATABASE_URL đang dùng:", os.getenv("DATABASE_URL"))
+
 import streamlit as st
-import uuid
 
 from ui.components.sidebar import render_sidebar, _check_background_graph
+from ui.components.auth import render_login_page, render_logout_button
 from ui.components.chat import render_chat
 from ui.components.graph_viewer import render_graph_viewer
 from ui.components.quiz_arena import render_quiz_arena
@@ -182,10 +186,17 @@ def get_theme_styles() -> str:
 
 st.markdown(f"<style>{get_theme_styles()}</style>", unsafe_allow_html=True)
 
-# --- Khởi tạo session_state 1 lần duy nhất khi user mở app ---
-if "user_id" not in st.session_state:
-    st.session_state.user_id = f"user_{uuid.uuid4().hex[:8]}"
+# --- Cổng xác thực: chưa đăng nhập thì không render bất kỳ phần nào của app ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
+if not st.session_state.authenticated:
+    render_login_page()
+    st.stop()
+
+# --- Khởi tạo session_state 1 lần duy nhất khi user đã đăng nhập ---
+# (user_id giờ lấy từ tài khoản thật lúc đăng nhập/đăng ký — auth.py đã set sẵn,
+# không sinh ngẫu nhiên uuid nữa như trước, để tiến độ học tập nối tiếp đúng người)
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
@@ -227,6 +238,11 @@ if "current_sources" not in st.session_state:
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 
+# Kiểm tra thread nền build graph ĐỘC LẬP với việc sidebar có đang mở hay không —
+# nếu chỉ gọi bên trong render_sidebar(), lúc sidebar bị thu gọn (collapsed_sidebar=True)
+# thread chạy xong cũng không ai đọc kết quả, khiến "graph_building" bị kẹt True mãi mãi.
+_check_background_graph()
+
 
 def apply_quick_action(prompt: str) -> None:
     st.session_state.current_page = "assistant"
@@ -243,7 +259,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-_, action_col = st.columns([4, 1])
+_, user_col, action_col = st.columns([3.4, 0.9, 0.7])
+with user_col:
+    st.caption(f"Đăng nhập: **{st.session_state.get('username', '')}**")
 with action_col:
     button_label = "Dark" if st.session_state.theme_mode == "light" else "Light"
     if st.button(button_label, key="theme_switch", use_container_width=True):
@@ -289,6 +307,9 @@ with st.sidebar:
         if st.button("Open workspace", use_container_width=True):
             st.session_state.collapsed_sidebar = False
             st.rerun()
+
+    st.divider()
+    render_logout_button()
 
 render_navbar()
 render_page_content(render_chat, render_graph_viewer, render_quiz_arena)

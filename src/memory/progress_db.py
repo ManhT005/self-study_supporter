@@ -1,27 +1,21 @@
-# src/memory/progress_db.py
 from datetime import datetime
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, Float
-from sqlalchemy.orm import declarative_base, sessionmaker
 
-Base = declarative_base()
+from src.db.database import Base, engine, SessionLocal
+from src.db.models import QuizAttempt
 
-
-class QuizAttempt(Base):
-    __tablename__ = "quiz_attempts"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String, nullable=False, index=True)
-    topic = Column(String, nullable=False)
-    question = Column(String, nullable=False)
-    is_correct = Column(Integer, nullable=False)  # 0/1, SQLite không có bool riêng
-    timestamp = Column(DateTime, default=datetime.utcnow)
+# Đảm bảo bảng tồn tại (users + quiz_attempts) — idempotent, gọi nhiều lần vô hại
+Base.metadata.create_all(engine)
 
 
 class ProgressDB:
-    def __init__(self, db_path: str = "data/progress.db"):
-        self.engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
-        Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker(bind=self.engine)
+    """
+    Giờ dùng chung engine/Base với hệ thống auth (src/db/database.py) —
+    cùng 1 database Postgres thật (hoặc SQLite khi dev local), không còn
+    tự tạo file SQLite riêng như trước.
+    """
+
+    def __init__(self):
+        self.Session = SessionLocal
 
     def record_attempt(self, user_id: str, topic: str, question: str, is_correct: bool) -> None:
         session = self.Session()

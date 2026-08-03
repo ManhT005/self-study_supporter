@@ -9,3 +9,5 @@ networkx
 sqlalchemy
 streamlit
 requests
+bcrypt
+psycopg2-binary

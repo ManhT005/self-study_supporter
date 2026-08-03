@@ -28,6 +28,70 @@ from src.agent.tools.save_note import SaveNoteTool
 from src.agent.tools.get_progress import GetProgressTool
 from src.memory.long_term import LongTermMemory
 from src.memory.progress_db import ProgressDB
+from src.documents.document_service import (
+    create_document, update_document_status, update_document_graph, get_latest_ready_document,
+)
+from src.graph.schemas import ConceptGraph
+
+
+def _try_resume_existing_documents():
+    """
+    Khôi phục pipeline từ tài liệu 'ready' gần nhất của ĐÚNG user này (tra theo
+    bảng `documents` trong Postgres) — không còn đoán qua ChromaDB.count() như
+    trước. Nhờ có concept_graph_json lưu sẵn, việc khôi phục KHÔNG cần gọi lại
+    LLM để build graph — nhanh hơn và không tốn quota.
+    """
+    if st.session_state.orchestrator is not None:
+        return  # đã có sẵn trong phiên này
+
+    user_id_int = int(st.session_state.user_id)
+    doc = get_latest_ready_document(user_id_int)
+    if doc is None:
+        return  # user này chưa có tài liệu 'ready' nào, để upload bình thường
+
+    store = VectorStore(collection_name=doc["chroma_collection_name"])
+    if store.count() == 0:
+        # Postgres nói 'ready' nhưng ChromaDB rỗng (ví dụ host ephemeral bị wipe
+        # dữ liệu) -> không thể tin tưởng, để user upload lại cho chắc.
+        return
+
+    chunks = store.load_all_chunks()
+    bm25_index = BM25Index(chunks)
+    provider = LocalEmbeddingProvider()
+
+    def embed_query_fn(query: str) -> list[float]:
+        return provider.embed([query], task_type="RETRIEVAL_QUERY")[0]
+
+    llm = _get_llm_client()
+    st.session_state.llm_client = llm
+
+    long_term_memory = LongTermMemory(store, embed_query_fn)
+    progress_db = ProgressDB()
+
+    tools = [
+        SearchDocsTool(store, bm25_index, embed_query_fn),
+        GenerateQuizTool(llm),
+        SaveNoteTool(long_term_memory),
+        GetProgressTool(progress_db),
+    ]
+    orchestrator = ReActOrchestrator(llm, tools=tools)
+
+    st.session_state.store = store
+    st.session_state.bm25_index = bm25_index
+    st.session_state.embed_query_fn = embed_query_fn
+    st.session_state.orchestrator = orchestrator
+    st.session_state.progress_db = progress_db
+    st.session_state.current_document_id = doc["id"]
+    st.session_state.current_sources = [doc["filename"], "Knowledge graph", "Progress notes"]
+    st.session_state.graph_source_chunks = chunks[:5]
+
+    if doc["concept_graph_json"]:
+        graph = ConceptGraph(**doc["concept_graph_json"])
+        st.session_state.concept_graph = graph
+        st.session_state.learning_path = [] if detect_cycles(graph) else suggest_learning_path(graph)
+    else:
+        st.session_state.concept_graph = None
+        st.session_state.learning_path = []
 
 
 def render_sidebar():
@@ -76,6 +140,8 @@ def render_sidebar():
         st.session_state.last_uploaded_file_id = None
     if "is_processing" not in st.session_state:
         st.session_state.is_processing = False
+
+    _try_resume_existing_documents()
 
     uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], label_visibility="collapsed", key="pdf_upload")
     if uploaded_file is not None:
@@ -169,6 +235,7 @@ def _reset_for_new_document():
         "graph_building",
         "graph_future",
         "graph_source_chunks",
+        "current_document_id",
     ]:
         st.session_state.pop(key, None)
     st.session_state.chat_history = []
@@ -200,13 +267,8 @@ def trigger_graph_build():
     """Trigger tạo/rebuild lộ trình học từ tài liệu đã upload."""
     chunks_for_graph = st.session_state.get("graph_source_chunks")
     if not chunks_for_graph:
-        document_text = st.session_state.get("uploaded_document_text")
-        if document_text:
-            # Tạo chunk tạm từ văn bản hiện có để graph builder vẫn có dữ liệu.
-            chunks_for_graph = [type("ChunkPlaceholder", (), {"text": document_text})()]
-        else:
-            st.warning("Không có dữ liệu nội dung để xây lộ trình học. Hãy upload lại tài liệu.")
-            return
+        st.warning("Không có dữ liệu nội dung để xây lộ trình học. Hãy upload lại tài liệu.")
+        return
 
     llm = st.session_state.get("llm_client")
     if llm is None:
@@ -231,21 +293,7 @@ def _build_graph_in_background(chunks, llm):
             learning_path = []
         return graph, learning_path, None
     except Exception as e:
-        # Log full traceback to disk for post-mortem and return a concise message
-        try:
-            import traceback, datetime, os
-
-            tb = traceback.format_exc()
-            err_msg = str(e)
-            log_line = f"[{datetime.datetime.utcnow().isoformat()}] ERROR: {err_msg}\n{tb}\n\n"
-            os.makedirs(os.path.join(os.getcwd(), "data"), exist_ok=True)
-            with open(os.path.join(os.getcwd(), "data", "graph_build_errors.log"), "a", encoding="utf-8") as f:
-                f.write(log_line)
-        except Exception:
-            # best-effort logging; ignore failures here
-            pass
-
-        return None, [], f"{e}. See data/graph_build_errors.log for details."
+        return None, [], str(e)
 
 
 def cancel_stuck_graph_build():
@@ -269,27 +317,13 @@ def _check_background_graph():
             st.session_state.concept_graph = graph
             st.session_state.learning_path = learning_path
             st.session_state.graph_build_error = error
+
+            document_id = st.session_state.get("current_document_id")
+            if document_id is not None and graph is not None and graph.nodes:
+                update_document_graph(document_id, graph.model_dump())
         except Exception as e:
             st.session_state.concept_graph = None
             st.session_state.learning_path = []
-            st.session_state.graph_build_error = str(e)
-
-        # Build finished — clear background handles and mark not building
-        st.session_state.graph_building = False
-        st.session_state.pop("graph_future", None)
-        executor = st.session_state.pop("graph_executor", None)
-        try:
-            if executor is not None:
-                executor.shutdown(wait=False)
-        except Exception:
-            pass
-
-        # Trigger a rerun so the current page updates immediately with results
-        try:
-            st.experimental_rerun()
-        except Exception:
-            # If rerun is not allowed in this context, fall back to leaving session_state updated
-            pass
             st.session_state.graph_build_error = str(e)
 
         st.session_state.graph_building = False
@@ -301,136 +335,158 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
     """Pipeline xử lý tài liệu với progress UI chi tiết từng bước."""
     t_start = time.time()
 
-    with st.status(" Đang xử lý tài liệu...", expanded=True) as status:
-        progress_bar = st.progress(0, text="Bắt đầu...")
+    user_id_int = int(st.session_state.user_id)
+    document_id, collection_name = create_document(user_id_int, uploaded_file.name)
+    st.session_state.current_document_id = document_id
 
-        # ── Bước 1: Parse PDF ──────────────────────────────────────
-        status.update(label="Đang đọc PDF...")
-        progress_bar.progress(0, text="Đang đọc PDF...")
+    try:
+        with st.status("📄 Đang xử lý tài liệu...", expanded=True) as status:
+            progress_bar = st.progress(0, text="Bắt đầu...")
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            tmp.write(file_bytes)
-            tmp_path = tmp.name
+            # ── Bước 1: Parse PDF ──────────────────────────────────────
+            status.update(label="📄 Đang đọc PDF...")
+            progress_bar.progress(0, text="Đang đọc PDF...")
 
-        def on_parse_progress(current, total):
-            pct = int((current / total) * 10)  # parse chiếm 10% tổng
-            progress_bar.progress(pct, text=f"Đang đọc trang {current}/{total}...")
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(file_bytes)
+                tmp_path = tmp.name
 
-        parse_result = parse_pdf(tmp_path, on_progress=on_parse_progress)
-        pages = parse_result.pages
+            def on_parse_progress(current, total):
+                pct = int((current / total) * 10)  # parse chiếm 10% tổng
+                progress_bar.progress(pct, text=f"Đang đọc trang {current}/{total}...")
 
-        status.write(f"✓ Đọc xong: {len(pages)} trang nội dung / {parse_result.total_pages} trang tổng"
-                     f" ({parse_result.skipped_pages} trang trắng bỏ qua)")
-        progress_bar.progress(10, text="Parse PDF hoàn tất")
+            parse_result = parse_pdf(tmp_path, on_progress=on_parse_progress)
+            pages = parse_result.pages
 
-        # ── Bước 2: Tách câu ──────────────────────────────────────
-        status.update(label="Đang tách câu...")
-        sentences = flatten_pages_to_sentences(pages)
-        status.write(f"✓ Tách được {len(sentences)} câu")
-        progress_bar.progress(15, text=f"{len(sentences)} câu đã tách")
+            status.write(f"✓ Đọc xong: {len(pages)} trang nội dung / {parse_result.total_pages} trang tổng"
+                         f" ({parse_result.skipped_pages} trang trắng bỏ qua)")
+            progress_bar.progress(10, text="Parse PDF hoàn tất")
 
-        # ── Bước 3: Embed sentences ───────────────────────────────
-        status.update(label="Đang tạo embedding cho câu...")
-        provider = _get_embedding_provider()
-        parallel_embedding = isinstance(provider, LocalEmbeddingProvider)
+            # ── Bước 2: Tách câu ──────────────────────────────────────
+            status.update(label="✂️ Đang tách câu...")
+            sentences = flatten_pages_to_sentences(pages)
+            status.write(f"✓ Tách được {len(sentences)} câu")
+            progress_bar.progress(15, text=f"{len(sentences)} câu đã tách")
 
-        def on_embed_progress(current, total):
-            # Embed sentences chiếm 15% → 55% (40% tổng)
-            pct = 15 + int((current / total) * 40)
-            progress_bar.progress(pct, text=f"Embedding câu {current}/{total}...")
+            # ── Bước 3: Embed sentences ───────────────────────────────
+            status.update(label="🧠 Đang tạo embedding cho câu...")
+            provider = _get_embedding_provider()
+            parallel_embedding = isinstance(provider, LocalEmbeddingProvider)
 
-        sentences = embed_sentences(
-            sentences,
-            provider,
-            use_parallel=parallel_embedding,
-            max_workers=4,
-            on_progress=on_embed_progress,
-        )
-        status.write(f"✓ Embedded {len(sentences)} câu")
-        progress_bar.progress(55, text="Embedding câu hoàn tất")
+            def on_embed_progress(current, total):
+                # Embed sentences chiếm 15% → 55% (40% tổng)
+                pct = 15 + int((current / total) * 40)
+                progress_bar.progress(pct, text=f"Embedding câu {current}/{total}...")
 
-        # ── Bước 4: Semantic chunking ─────────────────────────────
-        status.update(label="🔗 Đang phân đoạn ngữ nghĩa...")
-        distances = compute_distances(sentences)
-        breakpoints = compute_breakpoints(sentences, distances, percentile=95)
-        chunks = group_sentences_into_chunks(sentences, breakpoints, min_sentences=2, max_chars=800)
-        status.write(f"✓ Tạo được {len(chunks)} chunk từ {len(breakpoints)} breakpoint")
-        progress_bar.progress(65, text=f"{len(chunks)} chunks đã tạo")
+            sentences = embed_sentences(
+                sentences,
+                provider,
+                use_parallel=parallel_embedding,
+                max_workers=4,
+                on_progress=on_embed_progress,
+            )
+            status.write(f"✓ Embedded {len(sentences)} câu")
+            progress_bar.progress(55, text="Embedding câu hoàn tất")
 
-        # ── Bước 5: Lưu vào VectorStore ──────────────────────────
-        status.update(label="Đang lưu vào vector database...")
-        store = VectorStore()
-        existing_ids = store.get_existing_ids([c.chunk_id for c in chunks])
-        new_chunks = [c for c in chunks if c.chunk_id not in existing_ids]
+            # ── Bước 4: Semantic chunking ─────────────────────────────
+            status.update(label="🔗 Đang phân đoạn ngữ nghĩa...")
+            distances = compute_distances(sentences)
+            breakpoints = compute_breakpoints(sentences, distances, percentile=95)
+            chunks = group_sentences_into_chunks(sentences, breakpoints, min_sentences=2, max_chars=800)
+            status.write(f"✓ Tạo được {len(chunks)} chunk từ {len(breakpoints)} breakpoint")
+            progress_bar.progress(65, text=f"{len(chunks)} chunks đã tạo")
 
-        if new_chunks:
-            def on_chunk_embed_progress(current, total):
-                pct = 65 + int((current / total) * 15)
-                progress_bar.progress(pct, text=f"Embedding chunk {current}/{total}...")
+            # ── Bước 5: Lưu vào VectorStore ──────────────────────────
+            status.update(label="💾 Đang lưu vào vector database...")
+            # collection_name riêng cho đúng document_id này -> cách ly hoàn toàn
+            # với tài liệu của user khác (hoặc tài liệu khác của cùng user).
+            store = VectorStore(collection_name=collection_name)
+            existing_ids = store.get_existing_ids([c.chunk_id for c in chunks])
+            new_chunks = [c for c in chunks if c.chunk_id not in existing_ids]
 
-            vectors = embed_chunks(new_chunks, provider, on_progress=on_chunk_embed_progress)
-            store.add_chunks(new_chunks, vectors)
-            status.write(f"✓ Lưu {len(new_chunks)} chunk mới (bỏ qua {len(existing_ids)} chunk đã tồn tại)")
-        else:
-            status.write(f"✓ Tất cả {len(chunks)} chunk đã có trong DB, bỏ qua embedding")
+            if new_chunks:
+                def on_chunk_embed_progress(current, total):
+                    pct = 65 + int((current / total) * 15)
+                    progress_bar.progress(pct, text=f"Embedding chunk {current}/{total}...")
 
-        progress_bar.progress(80, text="Lưu vector database hoàn tất")
+                vectors = embed_chunks(new_chunks, provider, on_progress=on_chunk_embed_progress)
+                store.add_chunks(new_chunks, vectors)
+                status.write(f"✓ Lưu {len(new_chunks)} chunk mới (bỏ qua {len(existing_ids)} chunk đã tồn tại)")
+            else:
+                status.write(f"✓ Tất cả {len(chunks)} chunk đã có trong DB, bỏ qua embedding")
 
-        # ── Bước 6: Build BM25 index ─────────────────────────────
-        status.update(label="📑 Đang xây BM25 index...")
-        all_chunks = store.load_all_chunks()
-        bm25_index = BM25Index(all_chunks)
-        status.write(f"✓ BM25 index: {len(all_chunks)} chunks")
-        progress_bar.progress(85, text="BM25 index hoàn tất")
+            progress_bar.progress(80, text="Lưu vector database hoàn tất")
 
-        # ── Bước 7: Khởi tạo Orchestrator ────────────────────────
-        status.update(label="🤖 Đang khởi tạo agent...")
+            # ── Bước 6: Build BM25 index ─────────────────────────────
+            status.update(label="📑 Đang xây BM25 index...")
+            all_chunks = store.load_all_chunks()
+            bm25_index = BM25Index(all_chunks)
+            status.write(f"✓ BM25 index: {len(all_chunks)} chunks")
+            progress_bar.progress(85, text="BM25 index hoàn tất")
 
-        def embed_query_fn(query: str) -> list[float]:
-            return provider.embed([query], task_type="RETRIEVAL_QUERY")[0]
+            # ── Bước 7: Khởi tạo Orchestrator ────────────────────────
+            status.update(label="🤖 Đang khởi tạo agent...")
 
-        llm = _get_llm_client()
-        st.session_state.llm_client = llm  # để trigger_graph_build() dùng lại đúng LLM này
+            def embed_query_fn(query: str) -> list[float]:
+                return provider.embed([query], task_type="RETRIEVAL_QUERY")[0]
 
-        long_term_memory = LongTermMemory(store, embed_query_fn)
-        progress_db = ProgressDB()
+            llm = _get_llm_client()
+            st.session_state.llm_client = llm  # để trigger_graph_build() dùng lại đúng LLM này
 
-        tools = [
-            SearchDocsTool(store, bm25_index, embed_query_fn),
-            GenerateQuizTool(llm),
-            SaveNoteTool(long_term_memory),
-            GetProgressTool(progress_db),
-        ]
-        orchestrator = ReActOrchestrator(llm, tools=tools)
+            long_term_memory = LongTermMemory(store, embed_query_fn)
+            progress_db = ProgressDB()
 
-        st.session_state.store = store
-        st.session_state.bm25_index = bm25_index
-        st.session_state.embed_query_fn = embed_query_fn
-        st.session_state.orchestrator = orchestrator
-        st.session_state.progress_db = progress_db
-        st.session_state.current_sources = [uploaded_file.name, "Knowledge graph", "Progress notes"]
+            tools = [
+                SearchDocsTool(store, bm25_index, embed_query_fn),
+                GenerateQuizTool(llm),
+                SaveNoteTool(long_term_memory),
+                GetProgressTool(progress_db),
+            ]
+            orchestrator = ReActOrchestrator(llm, tools=tools)
 
-        progress_bar.progress(90, text="Agent sẵn sàng!")
-        status.write("✓ Agent đã khởi tạo xong — bạn có thể chat ngay!")
+            st.session_state.store = store
+            st.session_state.bm25_index = bm25_index
+            st.session_state.embed_query_fn = embed_query_fn
+            st.session_state.orchestrator = orchestrator
+            st.session_state.progress_db = progress_db
+            st.session_state.current_sources = [uploaded_file.name, "Knowledge graph", "Progress notes"]
 
-        # ── Bước 8: Graph building (async — không chặn) ──────────
-        status.update(label="Đang xây dựng lộ trình học (nền)...")
-        st.session_state.concept_graph = None
-        st.session_state.learning_path = []
-        st.session_state.graph_building = True
+            # Cập nhật metadata thật vào Postgres — status='ready' để lần đăng
+            # nhập sau (_try_resume_existing_documents) nhận ra và tự khôi phục.
+            update_document_status(
+                document_id,
+                status="ready",
+                page_count=parse_result.total_pages,
+                chunk_count=len(all_chunks),
+            )
 
-        # Snapshot dữ liệu cần cho graph builder
-        chunks_for_graph = chunks[:5]
-        st.session_state.graph_source_chunks = chunks_for_graph
-        st.session_state.uploaded_document_text = "\n\n".join(chunk.text for chunk in chunks_for_graph if getattr(chunk, "text", ""))
-        _start_graph_build_from_chunks(chunks_for_graph, llm)
+            progress_bar.progress(90, text="Agent sẵn sàng!")
+            status.write("✓ Agent đã khởi tạo xong — bạn có thể chat ngay!")
 
-        progress_bar.progress(95, text="Lộ trình học đang xây dựng ở nền...")
-        status.write("✓ Lộ trình học đang được xây dựng ở background...")
+            # ── Bước 8: Graph building (async — không chặn) ──────────
+            status.update(label="🗺️ Đang xây dựng lộ trình học (nền)...")
+            st.session_state.concept_graph = None
+            st.session_state.learning_path = []
+            st.session_state.graph_building = True
 
-        # ── Hoàn tất ──────────────────────────────────────────────
-        elapsed = time.time() - t_start
-        progress_bar.progress(100, text=f"Hoàn tất trong {elapsed:.1f}s!")
-        status.update(label=f" Tài liệu đã sẵn sàng ({elapsed:.1f}s)", state="complete")
+            # Snapshot dữ liệu cần cho graph builder
+            chunks_for_graph = chunks[:5]
+            st.session_state.graph_source_chunks = chunks_for_graph
+            _start_graph_build_from_chunks(chunks_for_graph, llm)
 
-    os.unlink(tmp_path)
+            progress_bar.progress(95, text="Lộ trình học đang xây dựng ở nền...")
+            status.write("✓ Lộ trình học đang được xây dựng ở background...")
+
+            # ── Hoàn tất ──────────────────────────────────────────────
+            elapsed = time.time() - t_start
+            progress_bar.progress(100, text=f"Hoàn tất trong {elapsed:.1f}s!")
+            status.update(label=f" Tài liệu đã sẵn sàng ({elapsed:.1f}s)", state="complete")
+
+        os.unlink(tmp_path)
+
+    except Exception as e:
+        # Đánh dấu 'failed' trong Postgres — tránh document bị kẹt vĩnh viễn ở
+        # 'processing' nếu có lỗi giữa chừng (bài học từ bug "learning path treo"
+        # trước đó: trạng thái không rõ ràng luôn gây khó debug về sau).
+        update_document_status(document_id, status="failed")
+        raise
