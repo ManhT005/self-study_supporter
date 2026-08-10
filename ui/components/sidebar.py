@@ -3,7 +3,6 @@ import streamlit as st
 import tempfile
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor, Future
 
 import google.genai as genai
 
@@ -57,7 +56,7 @@ def _try_resume_existing_documents():
 
     chunks = store.load_all_chunks()
     bm25_index = BM25Index(chunks)
-    provider = LocalEmbeddingProvider()
+    provider = _get_embedding_provider()
 
     def embed_query_fn(query: str) -> list[float]:
         return provider.embed([query], task_type="RETRIEVAL_QUERY")[0]
@@ -71,8 +70,8 @@ def _try_resume_existing_documents():
     tools = [
         SearchDocsTool(store, bm25_index, embed_query_fn),
         GenerateQuizTool(llm),
-        SaveNoteTool(long_term_memory),
-        GetProgressTool(progress_db),
+        SaveNoteTool(long_term_memory, str(st.session_state.user_id)),
+        GetProgressTool(progress_db, str(st.session_state.user_id)),
     ]
     orchestrator = ReActOrchestrator(llm, tools=tools)
 
@@ -98,34 +97,21 @@ def render_sidebar():
     st.markdown(
         """
         <div class="card" style="margin-bottom:0.6rem; padding:0.7rem 0.8rem;">
-            <strong>Session</strong><br>
-            <span style="font-size:0.9rem; color:#64748b;">{}</span>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem;">
+            <span style="font-size:1.5rem;">👤</span>
+            <span style="font-size:1rem; color:#1e293b; font-weight:500;">{}</span>
         </div>
-        """.format(st.session_state.user_id),
+        """.format(st.session_state.username),
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        """
-        <div class="card" style="padding:0.7rem 0.8rem;">
-            <strong>Agent capabilities</strong>
-            <ul style="margin:0.35rem 0 0 1rem; padding:0;">
-                <li>Phân tích tài liệu học tập</li>
-                <li>Xây lộ trình học từ knowledge graph</li>
-                <li>Gọi công cụ để tra cứu và ghi chú</li>
-                <li>Tạo quiz cá nhân hóa</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("<div class='card' style='padding:0.7rem 0.8rem;'><strong>Model</strong></div>", unsafe_allow_html=True)
+    st.markdown("<div class='card' style='padding:0.7rem 0.8rem; margin-bottom: 0.6rem;'><strong>Model</strong></div>", unsafe_allow_html=True)
     model_label = st.radio(
-        "",
+        "Chọn model",
         options=["Gemini", "Ollama"],
         horizontal=True,
         index=0 if st.session_state.model_choice == "gemini" else 1,
+        label_visibility="collapsed",
     )
     new_choice = "gemini" if model_label == "Gemini" else "ollama"
 
@@ -135,6 +121,19 @@ def render_sidebar():
         st.rerun()
     else:
         st.session_state.model_choice = new_choice
+
+    with st.expander("Agent capabilities", expanded=False):
+        st.markdown(
+            """
+            <ul style="margin:0; padding-left:1.2rem;">
+                <li>Phân tích tài liệu học tập</li>
+                <li>Xây lộ trình học từ knowledge graph</li>
+                <li>Gọi công cụ để tra cứu và ghi chú</li>
+                <li>Tạo quiz cá nhân hóa</li>
+            </ul>
+            """,
+            unsafe_allow_html=True,
+        )
 
     if "last_uploaded_file_id" not in st.session_state:
         st.session_state.last_uploaded_file_id = None
@@ -160,8 +159,7 @@ def render_sidebar():
             st.session_state.current_page = "assistant"
             st.rerun()
 
-    # Kiểm tra graph building background đã xong chưa
-    _check_background_graph()
+
 
     if st.session_state.is_processing:
         st.info("Processing new document... please wait.")
@@ -174,7 +172,7 @@ def render_sidebar():
 
         st.markdown("<div class='card' style='padding:0.7rem 0.8rem; margin-top:0.3rem;'><strong>Thought log</strong></div>", unsafe_allow_html=True)
         if st.session_state.get("last_scratchpad"):
-            st.text_area("", st.session_state.last_scratchpad, height=120, disabled=True, label_visibility="collapsed")
+            st.text_area("Thought log", st.session_state.last_scratchpad, height=120, disabled=True, label_visibility="collapsed")
         else:
             st.caption("No activity yet")
 
@@ -214,11 +212,10 @@ def _get_llm_client():
         return OllamaClient(model="qwen2.5:1.5b")
 
 
+@st.cache_resource
 def _get_embedding_provider() -> LocalEmbeddingProvider:
-    """Singleton — tránh reload model embedding mỗi lần upload file mới (~2-3s saved)."""
-    if "embedding_provider" not in st.session_state:
-        st.session_state.embedding_provider = LocalEmbeddingProvider()
-    return st.session_state.embedding_provider
+    """Singleton cached — model bge-m3 tải 1 lần duy nhất, giữ nguyên qua mọi session."""
+    return LocalEmbeddingProvider()
 
 
 def _reset_for_new_document():
@@ -233,7 +230,6 @@ def _reset_for_new_document():
         "current_quiz",
         "last_scratchpad",
         "graph_building",
-        "graph_future",
         "graph_source_chunks",
         "current_document_id",
     ]:
@@ -241,30 +237,8 @@ def _reset_for_new_document():
     st.session_state.chat_history = []
 
 
-def _start_graph_build_from_chunks(chunks_for_graph, llm):
-    """Khởi động build graph ở background từ các chunk đã lưu trong session_state.
-    `llm` phải là object đã khởi tạo sẵn trên main thread — KHÔNG được gọi bất kỳ
-    hàm nào đụng tới st.session_state/st.* bên trong thread nền, vì Streamlit
-    không cho phép gọi API của nó từ thread khác ngoài thread chính chạy script
-    (lỗi sẽ bị nuốt âm thầm bởi except Exception bên dưới, gây ra tình trạng
-    'graph luôn rỗng, không có lỗi nào hiển thị' rất khó debug)."""
-    if st.session_state.get("graph_building"):
-        return
-
-    st.session_state.concept_graph = None
-    st.session_state.learning_path = []
-    st.session_state.graph_building = True
-    st.session_state.graph_build_error = None
-    st.session_state.graph_build_started_at = time.time()
-
-    executor = ThreadPoolExecutor(max_workers=1)
-    future = executor.submit(_build_graph_in_background, chunks_for_graph, llm)
-    st.session_state.graph_future = future
-    st.session_state.graph_executor = executor
-
-
 def trigger_graph_build():
-    """Trigger tạo/rebuild lộ trình học từ tài liệu đã upload."""
+    """Tạo/rebuild lộ trình học đồng bộ — kết quả hiển thị ngay, không cần rerun."""
     chunks_for_graph = st.session_state.get("graph_source_chunks")
     if not chunks_for_graph:
         st.warning("Không có dữ liệu nội dung để xây lộ trình học. Hãy upload lại tài liệu.")
@@ -275,60 +249,28 @@ def trigger_graph_build():
         st.warning("Chưa có model sẵn sàng, hãy upload lại tài liệu.")
         return
 
-    _start_graph_build_from_chunks(chunks_for_graph, llm)
+    st.session_state.graph_build_error = None
 
-
-def _build_graph_in_background(chunks, llm):
-    """
-    Chạy trong thread riêng — build concept graph không chặn main pipeline.
-    `llm` là object LLMAdapter đã khởi tạo sẵn (được truyền vào, KHÔNG tự tạo
-    ở đây) — tuyệt đối không gọi st.session_state/st.* trong hàm này.
-    """
-    try:
-        content_sample = "\n\n".join(c.text for c in chunks[:5])
-        graph = build_concept_graph(content_sample, llm)
-        if not detect_cycles(graph):
-            learning_path = suggest_learning_path(graph)
-        else:
-            learning_path = []
-        return graph, learning_path, None
-    except Exception as e:
-        return None, [], str(e)
-
-
-def cancel_stuck_graph_build():
-    """Reset trạng thái build graph bị treo quá lâu — cho phép người dùng thử lại
-    thay vì kẹt vĩnh viễn ở 'Đang tạo lộ trình học...'."""
-    st.session_state.graph_building = False
-    st.session_state.graph_build_error = "Đã hủy do build quá lâu, vui lòng thử lại."
-    st.session_state.pop("graph_future", None)
-    st.session_state.pop("graph_executor", None)
-
-
-def _check_background_graph():
-    """Kiểm tra nếu graph building background đã hoàn thành và cập nhật session_state."""
-    future: Future | None = st.session_state.get("graph_future")
-    if future is None:
-        return
-
-    if future.done():
+    with st.spinner("Đang xây dựng lộ trình học..."):
         try:
-            graph, learning_path, error = future.result()
+            content_sample = "\n\n".join(c.text for c in chunks_for_graph[:5])
+            graph = build_concept_graph(content_sample, llm)
             st.session_state.concept_graph = graph
-            st.session_state.learning_path = learning_path
-            st.session_state.graph_build_error = error
+            if not detect_cycles(graph):
+                st.session_state.learning_path = suggest_learning_path(graph)
+            else:
+                st.session_state.learning_path = []
 
-            document_id = st.session_state.get("current_document_id")
-            if document_id is not None and graph is not None and graph.nodes:
-                update_document_graph(document_id, graph.model_dump())
+            # Persist to Postgres
+            doc_id = st.session_state.get("current_document_id")
+            if doc_id and graph and graph.nodes:
+                update_document_graph(doc_id, graph.model_dump())
         except Exception as e:
             st.session_state.concept_graph = None
             st.session_state.learning_path = []
             st.session_state.graph_build_error = str(e)
 
-        st.session_state.graph_building = False
-        st.session_state.pop("graph_future", None)
-        st.session_state.pop("graph_executor", None)
+    st.session_state.graph_building = False
 
 
 def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
@@ -371,7 +313,6 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             # ── Bước 3: Embed sentences ───────────────────────────────
             status.update(label="🧠 Đang tạo embedding cho câu...")
             provider = _get_embedding_provider()
-            parallel_embedding = isinstance(provider, LocalEmbeddingProvider)
 
             def on_embed_progress(current, total):
                 # Embed sentences chiếm 15% → 55% (40% tổng)
@@ -381,8 +322,6 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             sentences = embed_sentences(
                 sentences,
                 provider,
-                use_parallel=parallel_embedding,
-                max_workers=4,
                 on_progress=on_embed_progress,
             )
             status.write(f"✓ Embedded {len(sentences)} câu")
@@ -439,8 +378,8 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             tools = [
                 SearchDocsTool(store, bm25_index, embed_query_fn),
                 GenerateQuizTool(llm),
-                SaveNoteTool(long_term_memory),
-                GetProgressTool(progress_db),
+                SaveNoteTool(long_term_memory, str(st.session_state.user_id)),
+                GetProgressTool(progress_db, str(st.session_state.user_id)),
             ]
             orchestrator = ReActOrchestrator(llm, tools=tools)
 
@@ -463,19 +402,31 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             progress_bar.progress(90, text="Agent sẵn sàng!")
             status.write("✓ Agent đã khởi tạo xong — bạn có thể chat ngay!")
 
-            # ── Bước 8: Graph building (async — không chặn) ──────────
-            status.update(label="🗺️ Đang xây dựng lộ trình học (nền)...")
-            st.session_state.concept_graph = None
-            st.session_state.learning_path = []
-            st.session_state.graph_building = True
+            # ── Bước 8: Graph building (đồng bộ) ─────────────────────
+            status.update(label="🗺️ Đang xây dựng lộ trình học...")
+            st.session_state.graph_source_chunks = chunks[:5]
 
-            # Snapshot dữ liệu cần cho graph builder
-            chunks_for_graph = chunks[:5]
-            st.session_state.graph_source_chunks = chunks_for_graph
-            _start_graph_build_from_chunks(chunks_for_graph, llm)
+            try:
+                content_sample = "\n\n".join(c.text for c in chunks[:5])
+                graph = build_concept_graph(content_sample, llm)
+                st.session_state.concept_graph = graph
+                if not detect_cycles(graph):
+                    st.session_state.learning_path = suggest_learning_path(graph)
+                else:
+                    st.session_state.learning_path = []
 
-            progress_bar.progress(95, text="Lộ trình học đang xây dựng ở nền...")
-            status.write("✓ Lộ trình học đang được xây dựng ở background...")
+                if document_id and graph and graph.nodes:
+                    update_document_graph(document_id, graph.model_dump())
+
+                status.write("✓ Lộ trình học đã tạo xong!")
+            except Exception as e:
+                st.session_state.concept_graph = None
+                st.session_state.learning_path = []
+                st.session_state.graph_build_error = str(e)
+                status.write(f"⚠ Tạo lộ trình học thất bại: {e}")
+
+            st.session_state.graph_building = False
+            progress_bar.progress(95, text="Lộ trình học hoàn tất")
 
             # ── Hoàn tất ──────────────────────────────────────────────
             elapsed = time.time() - t_start

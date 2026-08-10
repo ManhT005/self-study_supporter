@@ -121,6 +121,13 @@ class ReActOrchestrator:
                 "final_answer": text[final_pos + len("Final Answer:"):].strip(),
             }
 
+        if "Action:" not in text:
+            return {
+                "type": "final_answer",
+                "thought": thought,
+                "final_answer": text.strip(),
+            }
+
         return {"type": "invalid", "raw": text}
 
     def run(self, user_query: str, conversation_history: str | None = None) -> AgentState:
@@ -177,8 +184,18 @@ class ReActOrchestrator:
                 )
 
         if not state.is_done:
-            state.final_answer = (
-                "Xin lỗi, tôi chưa thể tìm ra câu trả lời đầy đủ trong giới hạn số bước xử lý."
+            last_observation = next(
+                (e.content for e in reversed(state.scratchpad) if e.type == "observation"
+                and "không hợp lệ" not in e.content),  # bỏ qua các Observation lỗi format
+                None,
             )
+            if last_observation:
+                state.final_answer = (
+                    f"Dựa trên thông tin đã tìm được: {last_observation}"
+                )
+            else:
+                state.final_answer = (
+                    "Xin lỗi, tôi chưa thể tìm ra câu trả lời đầy đủ trong giới hạn số bước xử lý."
+                )
 
         return state

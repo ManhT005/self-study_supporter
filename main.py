@@ -7,7 +7,7 @@ print("DEBUG - DATABASE_URL đang dùng:", os.getenv("DATABASE_URL"))
 
 import streamlit as st
 
-from ui.components.sidebar import render_sidebar, _check_background_graph
+from ui.components.sidebar import render_sidebar
 from ui.components.auth import render_login_page, render_logout_button
 from ui.components.chat import render_chat
 from ui.components.graph_viewer import render_graph_viewer
@@ -30,7 +30,7 @@ def get_theme_styles() -> str:
         }
         .block-container {
             max-width: 1400px;
-            padding-top: 0.5rem;
+            padding-top: 2.5rem;
             padding-bottom: 2rem;
         }
         section[data-testid="stSidebar"] {
@@ -111,7 +111,7 @@ def get_theme_styles() -> str:
         }
         .block-container {
             max-width: 1400px;
-            padding-top: 0.45rem;
+            padding-top: 2.5rem;
             padding-bottom: 2rem;
         }
         section[data-testid="stSidebar"] {
@@ -238,62 +238,30 @@ if "current_sources" not in st.session_state:
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 
-# Kiểm tra thread nền build graph ĐỘC LẬP với việc sidebar có đang mở hay không —
-# nếu chỉ gọi bên trong render_sidebar(), lúc sidebar bị thu gọn (collapsed_sidebar=True)
-# thread chạy xong cũng không ai đọc kết quả, khiến "graph_building" bị kẹt True mãi mãi.
-_check_background_graph()
 
-
-def apply_quick_action(prompt: str) -> None:
-    st.session_state.current_page = "assistant"
-    st.session_state.pending_prompt = prompt
-
-
-st.markdown(
-    """
-    <div class="hero-panel">
-        <h2 style="margin: 0 0 0.2rem 0; font-size: 1.35rem;">Self Study Agent</h2>
-        <p style="margin: 0; opacity: 0.95;">Tải lên một tài liệu, để agent phân tích nội dung, xây lộ trình học và tạo quiz phù hợp với điểm yếu của bạn.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-_, user_col, action_col = st.columns([3.4, 0.9, 0.7])
-with user_col:
-    st.caption(f"Đăng nhập: **{st.session_state.get('username', '')}**")
-with action_col:
-    button_label = "Dark" if st.session_state.theme_mode == "light" else "Light"
+hero_col1, hero_col2, hero_col3 = st.columns([7, 2, 1.5])
+with hero_col1:
+    st.markdown(
+        """
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top: 0.2rem;">
+            <span style="font-size:1.6rem;">🎓</span>
+            <h2 style="margin: 0; font-size: 1.4rem; color: var(--text-color);">Self Study Agent</h2>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+with hero_col2:
+    st.markdown(
+        f"<div style='text-align:right; margin-top:0.4rem;'><span style='font-size: 0.95rem; color: #64748b;'>👤 <strong>{st.session_state.get('username', '')}</strong></span></div>", 
+        unsafe_allow_html=True
+    )
+with hero_col3:
+    button_label = "🌙 Dark" if st.session_state.theme_mode == "light" else "☀️ Light"
     if st.button(button_label, key="theme_switch", use_container_width=True):
         st.session_state.theme_mode = "dark" if st.session_state.theme_mode == "light" else "light"
         st.rerun()
 
-metrics = st.columns([1, 1, 1])
-with metrics[0]:
-    st.metric("Status", "Ready" if st.session_state.orchestrator else "Waiting", "")
-with metrics[1]:
-    st.metric("Model", "Gemini" if st.session_state.model_choice == "gemini" else "Ollama", "")
-with metrics[2]:
-    st.metric("Learning path", str(len(st.session_state.learning_path)) if st.session_state.learning_path else "0", "")
-
-if st.session_state.orchestrator is not None:
-    st.markdown(
-        "<div class='card' style='padding:0.75rem 0.85rem; margin-top:0.4rem;'><strong>Agent quick actions</strong></div>",
-        unsafe_allow_html=True,
-    )
-    action_cols = st.columns(4)
-    with action_cols[0]:
-        if st.button("Progress", key="quick_progress", use_container_width=True):
-            apply_quick_action(f"Cho tôi biết tiến độ học tập của học sinh {st.session_state.user_id}.")
-    with action_cols[1]:
-        if st.button("Save note", key="quick_note", use_container_width=True):
-            apply_quick_action(f"Lưu một ghi chú quan trọng cho học sinh {st.session_state.user_id} liên quan đến nội dung tài liệu vừa upload.")
-    with action_cols[2]:
-        if st.button("Search docs", key="quick_search", use_container_width=True):
-            apply_quick_action("Tìm và tóm tắt các điểm quan trọng liên quan trong tài liệu đã upload.")
-    with action_cols[3]:
-        if st.button("New quiz", key="quick_quiz", use_container_width=True):
-            apply_quick_action("Tạo một quiz ngắn để kiểm tra hiểu biết của tôi.")
+st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
 with st.sidebar:
     if st.button("Show sidebar" if st.session_state.collapsed_sidebar else "Hide sidebar", use_container_width=True):

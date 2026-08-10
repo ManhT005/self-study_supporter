@@ -1,10 +1,10 @@
 import streamlit as st
 
 PAGES = [
-    {"id": "overview", "label": "Overview", "description": "Start here"},
-    {"id": "assistant", "label": "Assistant", "description": "Ask questions"},
-    {"id": "learning", "label": "Learning Path", "description": "View concept flow"},
-    {"id": "quiz", "label": "Quiz", "description": "Practice and review"},
+    {"id": "overview", "label": "Tổng quan"},
+    {"id": "assistant", "label": "Trợ lý"},
+    {"id": "learning", "label": "Lộ trình"},
+    {"id": "quiz", "label": "Quiz"},
 ]
 
 
@@ -16,12 +16,16 @@ def render_navbar():
     for col, page in zip(nav_cols, PAGES):
         with col:
             is_active = st.session_state.current_page == page["id"]
-            container = st.container(border=is_active)
-            with container:
-                if st.button(page["label"], key=f"nav_{page['id']}", use_container_width=True):
-                    st.session_state.current_page = page["id"]
-                if is_active:
-                    st.caption(page["description"])
+            if st.button(
+                page["label"], 
+                key=f"nav_{page['id']}", 
+                use_container_width=True,
+                type="primary" if is_active else "secondary"
+            ):
+                st.session_state.current_page = page["id"]
+                st.rerun()
+
+    st.divider()
 
 
 def render_page_content(render_chat, render_graph_viewer, render_quiz_arena):

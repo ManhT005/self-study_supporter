@@ -1,31 +1,17 @@
 # ui/components/graph_viewer.py
 import streamlit as st
 
-from ui.components.sidebar import trigger_graph_build, _check_background_graph
+from ui.components.sidebar import trigger_graph_build
 
 
 def render_graph_viewer():
-    _check_background_graph()
     graph = st.session_state.get("concept_graph")
     learning_path = st.session_state.get("learning_path")
     has_source_chunks = bool(st.session_state.get("graph_source_chunks"))
     has_uploaded_text = bool(st.session_state.get("uploaded_document_text"))
     has_existing_graph = bool(graph is not None and getattr(graph, "nodes", None))
 
-    if st.session_state.get("graph_building"):
-        st.info("Đang tạo lộ trình học...")
-        cols = st.columns([2, 1])
-        with cols[0]:
-            if st.button("Tạo / tạo lại lộ trình học", key="create_learning_path", use_container_width=True):
-                trigger_graph_build()
-                st.rerun()
-        with cols[1]:
-            if st.button("Hủy tạo lộ trình học", key="cancel_learning_path", use_container_width=True):
-                from ui.components.sidebar import cancel_stuck_graph_build
-
-                cancel_stuck_graph_build()
-                st.rerun()
-    elif has_source_chunks or has_uploaded_text or has_existing_graph:
+    if has_source_chunks or has_uploaded_text or has_existing_graph:
         if st.button("Tạo / tạo lại lộ trình học", key="create_learning_path", use_container_width=True):
             trigger_graph_build()
             st.rerun()

@@ -15,19 +15,17 @@ def _switch_quiz_model_to_ollama():
                 tool.llm = new_llm
 
 
-def _get_quiz_cache_key(num_questions: int) -> str:
+def _get_quiz_history() -> list:
     file_id = st.session_state.get("last_uploaded_file_id") or "no_doc"
-    return f"quiz::{file_id}::{num_questions}"
+    history_dict = st.session_state.setdefault("quiz_history", {})
+    if file_id not in history_dict:
+        history_dict[file_id] = []
+    return history_dict[file_id]
 
 
-def _get_cached_quiz(num_questions: int):
-    cache = st.session_state.setdefault("quiz_cache", {})
-    return cache.get(_get_quiz_cache_key(num_questions))
-
-
-def _cache_quiz(num_questions: int, quiz):
-    cache = st.session_state.setdefault("quiz_cache", {})
-    cache[_get_quiz_cache_key(num_questions)] = quiz
+def _add_quiz_to_history(quiz: list):
+    history = _get_quiz_history()
+    history.append(quiz)
 
 
 def render_quiz_arena():
@@ -37,19 +35,39 @@ def render_quiz_arena():
 
     st.markdown("<div style='margin-bottom:0.6rem; color:#475569;'>Tạo một bộ quiz nhanh và nhận phản hồi tức thì.</div>", unsafe_allow_html=True)
 
-    num_questions = st.selectbox("Số lượng câu hỏi:", [1, 5, 10, 15], index=0, key="quiz_num_questions")
-    cached = _get_cached_quiz(num_questions)
+    st.markdown("### Lịch sử Quiz")
+    history = _get_quiz_history()
+    
+    if history:
+        past_quiz_options = [f"Quiz {i+1} ({len(q)} câu hỏi)" for i, q in enumerate(history)]
+        hist_cols = st.columns([2, 1])
+        with hist_cols[0]:
+            selected_past_idx = st.selectbox("Chọn quiz cũ:", range(len(past_quiz_options)), format_func=lambda x: past_quiz_options[x], key="select_past_quiz")
+        with hist_cols[1]:
+            st.write("") # spacer
+            st.write("")
+            if st.button("📥 Tải lại quiz", use_container_width=True, key="load_past_quiz_btn"):
+                st.session_state.current_quiz = history[selected_past_idx]
+                st.session_state.current_quiz_index = 0
+                st.session_state.quiz_submitted = False
+                st.session_state.quiz_feedback = None
+                st.session_state.quiz_results = []
+                st.rerun()
+    else:
+        st.caption("Chưa có quiz nào được tạo trong phiên này.")
 
-    if cached:
-        if st.button("📥 Tải lại quiz cũ", use_container_width=True, key=f"load_cached_quiz_{num_questions}"):
-            st.success("Tải lại quiz đã tạo trước đó từ cache.")
-            st.session_state.current_quiz = cached
-            st.session_state.current_quiz_index = 0
-            st.session_state.quiz_submitted = False
-            st.session_state.quiz_feedback = None
-            st.session_state.quiz_results = []
+    st.markdown("---")
+    st.markdown("### Tạo Quiz Mới")
 
-    if st.button("🎲 Tạo quiz mới", use_container_width=True, key=f"create_quiz_{num_questions}"):
+    cols = st.columns([2, 1])
+    with cols[0]:
+        num_questions = st.selectbox("Số lượng câu hỏi:", [1, 5, 10, 15], index=0, key="quiz_num_questions")
+    with cols[1]:
+        st.write("")
+        st.write("")
+        create_btn = st.button("🎲 Tạo quiz", use_container_width=True, key="create_quiz_btn")
+
+    if create_btn:
         with st.spinner("Đang tạo quiz..."):
             document_chunks = st.session_state.get("graph_source_chunks") or []
             document_text = "\n\n".join(chunk.text for chunk in document_chunks if getattr(chunk, "text", ""))
@@ -99,19 +117,13 @@ def render_quiz_arena():
             parsed_quiz = _parse_quiz_from_text(quiz_text)
 
         if parsed_quiz:
-            _cache_quiz(num_questions, parsed_quiz)
+            _add_quiz_to_history(parsed_quiz)
             st.session_state.current_quiz = parsed_quiz
             st.session_state.current_quiz_index = 0
             st.session_state.quiz_submitted = False
             st.session_state.quiz_feedback = None
             st.session_state.quiz_results = []
-        elif cached:
-            st.warning("Không tạo được quiz mới, dùng quiz cũ trong cache.")
-            st.session_state.current_quiz = cached
-            st.session_state.current_quiz_index = 0
-            st.session_state.quiz_submitted = False
-            st.session_state.quiz_feedback = None
-            st.session_state.quiz_results = []
+            st.rerun()
         else:
             st.error("Không parse được quiz từ Agent, thử lại nhé.")
             st.session_state.current_quiz = None

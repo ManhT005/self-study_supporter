@@ -18,13 +18,7 @@ def render_chat():
 
         with st.chat_message("assistant"):
             with st.spinner("Đang suy nghĩ..."):
-                # Chèn user_id vào câu hỏi để tool get_progress/save_note dùng được
-                # (đây chính là cơ chế tự động gắn user_id đã note từ Sprint 4 —
-                # thay vì bắt học sinh gõ ID, ta tiêm nó vào ngữ cảnh câu hỏi)
-                question_with_context = (
-                    f"[user_id của học sinh: {st.session_state.user_id}] {user_question}"
-                )
-                state = st.session_state.orchestrator.run(question_with_context)
+                state = st.session_state.orchestrator.run(user_question)
 
             st.markdown(state.final_answer)
             st.session_state.last_scratchpad = state.render_scratchpad()  # để Thought Log sidebar đọc
