@@ -1,6 +1,5 @@
 import streamlit as st
 from src.agent.orchestrator import ReActOrchestrator
-from src.llm.ollama_client import OllamaClient
 
 
 def render_chat():
@@ -46,7 +45,17 @@ def _handle_message(user_question: str) -> None:
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             question_with_context = f"[user_id của học sinh: {st.session_state.user_id}] {user_question}"
-            state = _run_with_fallback(st.session_state.orchestrator, question_with_context)
+            try:
+                state = st.session_state.orchestrator.run(question_with_context)
+            except RuntimeError as e:
+                # Tất cả provider đều hết quota — thông báo cho người dùng
+                st.error(f"⚠️ {e}")
+                fallback_answer = (
+                    "Xin lỗi, tất cả các nhà cung cấp AI đều tạm thời hết quota. "
+                    "Vui lòng thử lại sau ít phút hoặc chuyển sang chế độ Ollama cục bộ."
+                )
+                st.session_state.chat_history.append({"role": "assistant", "content": fallback_answer})
+                return
 
         st.markdown(state.final_answer)
         st.session_state.last_scratchpad = state.render_scratchpad()
@@ -56,27 +65,3 @@ def _handle_message(user_question: str) -> None:
         st.markdown(f"<div style='margin-top:0.45rem;'>{chip_html}</div>", unsafe_allow_html=True)
 
     st.session_state.chat_history.append({"role": "assistant", "content": state.final_answer})
-
-
-def _run_with_fallback(orchestrator, question: str):
-    """Fallback ẨN: chỉ kích hoạt khi Gemini hết quota giữa chừng, không cần người dùng thao tác."""
-    try:
-        return orchestrator.run(question)
-    except RuntimeError as e:
-        if "quota" not in str(e).lower():
-            raise
-
-        st.warning("⚠️ Gemini hết quota hôm nay, tự động chuyển sang Ollama local từ đây trở đi...")
-        st.session_state.model_choice = "ollama"
-
-        fallback_llm = OllamaClient(model="qwen2.5:1.5b")
-        new_tools = []
-        for tool in orchestrator.tools.values():
-            if hasattr(tool, "llm"):
-                tool.llm = fallback_llm
-            new_tools.append(tool)
-
-        fallback_orchestrator = ReActOrchestrator(fallback_llm, tools=new_tools)
-        st.session_state.orchestrator = fallback_orchestrator
-
-        return fallback_orchestrator.run(question)

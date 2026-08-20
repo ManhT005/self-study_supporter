@@ -210,7 +210,7 @@ if "concept_graph" not in st.session_state:
     st.session_state.concept_graph = None
 
 if "model_choice" not in st.session_state:
-    st.session_state.model_choice = "gemini"
+    st.session_state.model_choice = "auto"
 
 if "learning_path" not in st.session_state:
     st.session_state.learning_path = []
