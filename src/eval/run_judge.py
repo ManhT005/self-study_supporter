@@ -1,6 +1,7 @@
 import json
 import time
 from src.eval.llm_judge import judge_answer
+from src.llm.ollama_client import OllamaClient
 
 
 def run_judge_on_results(results: list[dict], judge_llm) -> list[dict]:
@@ -36,7 +37,8 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
 
     load_dotenv()
-    judge_llm = GeminiClient(genai.Client(api_key=os.getenv("GEMINI_API_KEY")))
+    # judge_llm = GeminiClient(genai.Client(api_key=os.getenv("GEMINI_API_KEY")))
+    judge_llm = OllamaClient(model='qwen3:1.7b')
 
     judged_results = run_judge_on_results(results, judge_llm)
 

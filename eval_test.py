@@ -37,7 +37,7 @@ tool = SearchDocsTool(store, bm25_index, embed_query_fn)
 
 # llm = GeminiClient(gemini_client, model="gemini-3-flash-preview")
 
-llm = OllamaClient()
+llm = OllamaClient(model="qwen3:1.7b")
 
 ltm = LongTermMemory(store, embed_query_fn)
 progress_db = ProgressDB()
@@ -54,8 +54,8 @@ orchestrator = ReActOrchestrator(
 
 
 dataset = load_eval_dataset()
-results = run_eval(dataset, store, bm25_index, embed_query_fn, llm, orchestrator)  # test 3 câu trước
-save_results(results, "data/eval_results_test.json")
+results = run_eval(dataset[0:5], store, bm25_index, embed_query_fn, llm, orchestrator)  # test 3 câu trước
+save_results(results, "data/eval_results_test1.json")
 
 for r in results:
     print(f"[{r['category']}] {r['question']}")

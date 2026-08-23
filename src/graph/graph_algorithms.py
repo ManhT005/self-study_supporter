@@ -26,8 +26,10 @@ def detect_cycles(graph: ConceptGraph) -> list[list[str]]:
 def suggest_learning_path(graph: ConceptGraph) -> list[str]:
     """
     Trả về thứ tự học đề xuất (list node id) bằng Topological Sort.
-    Nếu đồ thị có cycle, không thể sort được -> cần xử lý trước khi gọi hàm này
-    (xem cách dùng trong ví dụ test bên dưới).
+    Nếu đồ thị có cycle, không thể sort được -> trả về [] như bản cũ.
     """
     g = to_networkx(graph)
-    return list(nx.topological_sort(g))
+    try:
+        return list(nx.topological_sort(g))
+    except nx.NetworkXUnfeasible:
+        return []

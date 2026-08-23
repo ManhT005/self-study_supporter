@@ -1,6 +1,9 @@
 import hashlib
 import re
+from typing import Callable
+
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.rag.schemas import Chunk, DocumentPage, SentenceUnit
 from src.rag.embedding_provider import EmbeddingProvider
 
@@ -60,11 +63,65 @@ def flatten_pages_to_sentences(pages: list[DocumentPage]) -> list[SentenceUnit]:
 
 
 # embed_sentences trong chunker.py
-def embed_sentences(sentences: list[SentenceUnit], provider: EmbeddingProvider) -> list[SentenceUnit]:
-    texts = [s.text for s in sentences]
+def _embed_sentence_batch(batch: list[SentenceUnit], provider: EmbeddingProvider) -> list[SentenceUnit]:
+    """Embed một batch câu và gán vector vào từng SentenceUnit."""
+    texts = [s.text for s in batch]
     vectors = provider.embed(texts, task_type="SEMANTIC_SIMILARITY")
-    for s, v in zip(sentences, vectors):
+    for s, v in zip(batch, vectors):
         s.embedding = v
+    return batch
+
+
+def _split_into_batches(sentences: list[SentenceUnit], batch_size: int) -> list[list[SentenceUnit]]:
+    """Chia sentences thành các batch có kích thước cố định, hiệu quả hơn chia theo page."""
+    return [sentences[i:i + batch_size] for i in range(0, len(sentences), batch_size)]
+
+
+def embed_sentences(
+    sentences: list[SentenceUnit],
+    provider: EmbeddingProvider,
+    use_parallel: bool = False,
+    max_workers: int = 4,
+    batch_size: int = 64,
+    on_progress: Callable[[int, int], None] | None = None,
+) -> list[SentenceUnit]:
+    if not sentences:
+        return []
+
+    total = len(sentences)
+
+    # File nhỏ (<= 1 batch): embed trực tiếp, không cần overhead threading
+    if total <= batch_size:
+        result = _embed_sentence_batch(sentences, provider)
+        if on_progress:
+            on_progress(total, total)
+        return result
+
+    batches = _split_into_batches(sentences, batch_size)
+    embedded_count = 0
+
+    if not use_parallel or len(batches) <= 2:
+        # Tuần tự cho ít batch hoặc khi không dùng parallel
+        for batch in batches:
+            _embed_sentence_batch(batch, provider)
+            embedded_count += len(batch)
+            if on_progress:
+                on_progress(embedded_count, total)
+        return sentences
+
+    # Parallel: submit batches theo thứ tự, collect kết quả
+    # Dùng dict để giữ thứ tự gốc khi futures complete không theo thứ tự
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_embed_sentence_batch, batch, provider): idx
+            for idx, batch in enumerate(batches)
+        }
+        for future in as_completed(futures):
+            future.result()  # raise exception nếu có lỗi
+            embedded_count += len(batches[futures[future]])
+            if on_progress:
+                on_progress(embedded_count, total)
+
     return sentences
 
 
@@ -72,16 +129,26 @@ def compute_distances(sentences: list[SentenceUnit]) -> list[float]:
     """
     Tính cosine distance giữa embedding của câu i và câu i+1.
     Trả về list có độ dài = len(sentences) - 1.
+
+    Vectorized: dùng NumPy batch matrix operation thay vì Python loop,
+    nhanh hơn ~5-10x cho tài liệu nhiều câu.
     """
-    distances = []
-    for i in range(len(sentences) - 1):
-        a = np.array(sentences[i].embedding)
-        b = np.array(sentences[i + 1].embedding)
+    if len(sentences) < 2:
+        return []
 
-        cosine_similarity = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-        cosine_distance = 1 - cosine_similarity
-        distances.append(float(cosine_distance))
+    # Stack tất cả embedding thành matrix (N x D) một lần duy nhất
+    embeddings = np.array([s.embedding for s in sentences], dtype=np.float32)
 
+    # Normalize toàn bộ matrix cùng lúc
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    norms = np.where(norms == 0, 1e-10, norms)  # tránh chia cho 0
+    normalized = embeddings / norms
+
+    # Cosine similarity giữa câu liền kề = dot product theo từng hàng
+    similarities = np.sum(normalized[:-1] * normalized[1:], axis=1)
+
+    # Cosine distance = 1 - similarity
+    distances = (1.0 - similarities).tolist()
     return distances
 
 
