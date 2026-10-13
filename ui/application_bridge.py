@@ -1,4 +1,5 @@
 import os
+import atexit
 import streamlit as st
 
 from study_supporter.bootstrap import ApplicationFactory
@@ -12,4 +13,6 @@ def get_application_services():
         values.update(dict(st.secrets))
     except (FileNotFoundError, KeyError):
         pass
-    return ApplicationFactory(Settings.from_mapping(values))
+    services = ApplicationFactory(Settings.from_mapping(values))
+    atexit.register(services.close)
+    return services

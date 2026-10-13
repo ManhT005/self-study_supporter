@@ -47,6 +47,36 @@ class ApplicationFactory:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.embedding = SharedEmbedding(settings)
+        from study_supporter.infrastructure.persistence.sqlalchemy.database import Database
+        from study_supporter.infrastructure.persistence.sqlalchemy.repositories import (
+            DocumentRepository,
+            UserRepository,
+        )
+        from study_supporter.infrastructure.persistence.sqlalchemy.progress_repository import (
+            ProgressDB,
+        )
+        from study_supporter.application.use_cases.authenticate import Authentication
+        from study_supporter.application.use_cases.documents import OwnedDocuments
+
+        self.database = Database(settings)
+        self.document_repository = DocumentRepository(self.database.sessions)
+        self.documents = OwnedDocuments(self.document_repository)
+        self.authentication = Authentication(UserRepository(self.database.sessions))
+        self.progress_repository = ProgressDB(self.database.sessions)
+
+    def verify_schema(self):
+        from study_supporter.infrastructure.persistence.sqlalchemy.lifecycle import verify_schema
+
+        verify_schema(self.database)
+
+    def close(self):
+        self.database.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
 
     def provider(self, mode="auto"):
         from study_supporter.infrastructure.llm.factory import select_provider
