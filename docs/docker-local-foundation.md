@@ -12,7 +12,7 @@ and a one-shot Alembic service runs before app startup. Existing schemas require
 ```powershell
 git fetch origin
 git switch feature/docker-local-foundation
-Copy-Item .env.docker.example .env.docker
+Copy-Item config/docker.env.example .env.docker
 # Edit .env.docker; replace POSTGRES_PASSWORD with a strong password.
 docker compose --env-file .env.docker config --quiet
 docker compose --env-file .env.docker up -d --build

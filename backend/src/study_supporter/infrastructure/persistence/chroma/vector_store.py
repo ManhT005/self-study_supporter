@@ -4,7 +4,14 @@ from study_supporter.domain.documents import Chunk
 
 
 class VectorStore:
-    def __init__(self, persist_path: str = "data/chroma_db", collection_name: str = "documents"):
+    def __init__(
+        self,
+        persist_path: str = "data/chroma_db",
+        collection_name: str = "documents",
+        *,
+        host: str | None = None,
+        port: int | None = None,
+    ):
         """
         collection_name: do caller quyết định (ví dụ f"documents_{document_id}")
         — mỗi tài liệu 1 collection riêng, cách ly hoàn toàn giữa các tài liệu/user,
@@ -19,9 +26,9 @@ class VectorStore:
 
         self.persist_path = persist_path
 
-        chroma_host = os.getenv("CHROMA_SERVER_HOST")
+        chroma_host = host if host is not None else os.getenv("CHROMA_SERVER_HOST")
         if chroma_host:
-            chroma_port = int(os.getenv("CHROMA_SERVER_PORT", "8000"))
+            chroma_port = port if port is not None else int(os.getenv("CHROMA_SERVER_PORT", "8000"))
             self.client = chromadb.HttpClient(
                 host=chroma_host, port=chroma_port, settings=Settings(anonymized_telemetry=False)
             )

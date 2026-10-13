@@ -1,27 +1,10 @@
 target-version = "py311"
 line-length = 100
-include = [
-  "apps/**/*.py",
-  "backend/src/**/*.py", "backend/tests/**/*.py", "backend/migrations/**/*.py",
-  "scripts/check_import_boundaries.py", "scripts/docker_backup.py", "scripts/docker_smoke.py",
-  "src/auth/*.py", "src/documents/*.py", "src/db/database.py", "src/db/lifecycle.py",
-  "src/memory/progress_db.py", "src/rag/chunker.py", "src/rag/pdf_parser.py",
-  "src/rag/bm25_index.py", "src/rag/hybrid_retriever.py", "src/rag/vector_store.py",
-  "src/rag/embedding_provider.py",
-  "src/graph/schemas.py", "src/llm/errors.py", "src/llm/openai_compatible_client.py",
-  "src/llm/gemini_client.py", "src/llm/multi_provider_llm.py",
-  "src/agent/tools/generate_quiz.py", "src/agent/tools/search_docs.py",
-  "ui/components/auth.py", "ui/components/sidebar.py", "ui/components/chat.py",
-  "ui/components/quiz_arena.py", "main.py", "tests/conftest.py",
-  "tests/test_database_config.py", "tests/test_react_baseline.py",
-  "eval_test.py", "scripts/streamlit_smoke.py",
-  "scripts/model_smoke.py",
-]
+include = ["apps/**/*.py", "backend/src/**/*.py", "backend/tests/**/*.py", "backend/migrations/**/*.py", "scripts/**/*.py", "evaluation/**/*.py", "main.py", "eval_test.py"]
 
 [lint]
 select = ["E4", "E7", "E9", "F"]
 
 [lint.per-file-ignores]
-# Load local dotenv before importing legacy adapters. Remove with explicit bootstrap in P1.
-"main.py" = ["E402"]
+# Entrypoint loads dotenv and sets Streamlit page configuration before adapters.
 "apps/streamlit_legacy/main.py" = ["E402"]
