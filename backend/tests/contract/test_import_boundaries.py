@@ -20,6 +20,10 @@ def test_actual_package():
         "from src.rag import chunker",
         "import google.genai",
         "from .. import infrastructure",
+        "import urllib.request",
+        "import socket",
+        "import sqlite3",
+        "import subprocess",
     ],
 )
 def test_gate_rejects_forbidden_imports(source):
