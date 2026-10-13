@@ -30,6 +30,7 @@ def test_four_options_required(options):
         "Câu 1: Q?\nA. a (Đáp án đúng)\nB. b",
         "Câu 1: Q?\nA. incorrect\nB. b\nC. c\nD. d",
         "Câu 1: Q?\nA. a (Đáp án đúng)\nA. b\nC. c\nD. d",
+        "Câu 1: Q?\nA. a (Đáp án đúng)\nB. b\nC. c\nD. d\nE. extra",
     ],
 )
 def test_text_parser_fails_closed(text):

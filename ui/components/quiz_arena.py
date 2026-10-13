@@ -356,7 +356,7 @@ def _parse_quiz_from_text(text: str, topic_label: str = "Chủ đề chung") -> 
             flags=re.MULTILINE | re.DOTALL,
         )
 
-        labels = re.findall(r"^\s*([A-D])\.\s*", options_zone, flags=re.MULTILINE)
+        labels = re.findall(r"^\s*([A-Z])\.\s*", options_zone, flags=re.MULTILINE)
         if not question_match or len(options) != 4 or labels != list("ABCD"):
             return None
 
