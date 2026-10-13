@@ -25,7 +25,11 @@ services:
     env_file:
       - .env.docker
     environment:
-      DATABASE_URL: "postgresql+psycopg2://${POSTGRES_USER:-study}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.docker}@db:5432/${POSTGRES_DB:-study_supporter}"
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-study_supporter}
+      POSTGRES_USER: ${POSTGRES_USER:-study}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.docker}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
     ports:
       - "127.0.0.1:${APP_PORT:-8501}:8501"
@@ -37,6 +41,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    mem_limit: 6g
+    cpus: 2.0
 
   # Optional fully-containerized Ollama. Requires --profile local-ai.
   # Set OLLAMA_BASE_URL=http://ollama:11434 in .env.docker.
