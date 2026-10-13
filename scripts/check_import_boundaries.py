@@ -10,6 +10,7 @@ IO_DRIVERS = {"urllib", "http", "socket", "sqlite3", "subprocess"}
 DETERMINISTIC_IMPORTS = {
     "study_supporter.domain.documents": {"pydantic"},
     "study_supporter.domain.knowledge_graph": {"pydantic"},
+    "study_supporter.ai.ingestion.chunking": {"numpy"},
 }
 ALLOWED = {
     "domain": {"domain"},

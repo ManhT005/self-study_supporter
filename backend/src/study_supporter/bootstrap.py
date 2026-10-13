@@ -63,6 +63,21 @@ class ApplicationFactory:
         self.documents = OwnedDocuments(self.document_repository)
         self.authentication = Authentication(UserRepository(self.database.sessions))
         self.progress_repository = ProgressDB(self.database.sessions)
+        from study_supporter.application.use_cases.ingest_document import IngestDocumentUseCase
+        from study_supporter.infrastructure.documents.pymupdf_parser import PdfParser
+        from study_supporter.infrastructure.embeddings.pipeline import EmbeddingPipeline
+
+        self.ingestion = IngestDocumentUseCase(
+            self.document_repository,
+            PdfParser(),
+            EmbeddingPipeline(self.embedding),
+            self.vector_store,
+        )
+
+    def vector_store(self, document):
+        from study_supporter.infrastructure.persistence.chroma.vector_store import VectorStore
+
+        return VectorStore(self.settings.chroma_path, document["chroma_collection_name"])
 
     def verify_schema(self):
         from study_supporter.infrastructure.persistence.sqlalchemy.lifecycle import verify_schema
