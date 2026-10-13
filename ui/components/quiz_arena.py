@@ -71,9 +71,7 @@ def render_quiz_arena():
     history = _get_quiz_history()
 
     if history:
-        past_quiz_options = [
-            f"Quiz {i + 1} ({len(q)} câu hỏi)" for i, q in enumerate(history)
-        ]
+        past_quiz_options = [f"Quiz {i + 1} ({len(q)} câu hỏi)" for i, q in enumerate(history)]
         hist_cols = st.columns([2, 1])
         with hist_cols[0]:
             selected_past_idx = st.selectbox(
@@ -85,9 +83,7 @@ def render_quiz_arena():
         with hist_cols[1]:
             st.write("")  # spacer
             st.write("")
-            if st.button(
-                "📥 Tải lại quiz", use_container_width=True, key="load_past_quiz_btn"
-            ):
+            if st.button("📥 Tải lại quiz", use_container_width=True, key="load_past_quiz_btn"):
                 st.session_state.current_quiz = history[selected_past_idx]
                 st.session_state.current_quiz_index = 0
                 st.session_state.quiz_submitted = False
@@ -102,9 +98,7 @@ def render_quiz_arena():
     st.markdown("### Tạo Quiz Mới")
 
     topics = _get_available_topics()
-    topic_options = [
-        {"id": "all", "label": "📚 Toàn bộ tài liệu", "description": ""}
-    ] + topics
+    topic_options = [{"id": "all", "label": "📚 Toàn bộ tài liệu", "description": ""}] + topics
 
     cols = st.columns([2, 1, 1])
     with cols[0]:
@@ -121,9 +115,7 @@ def render_quiz_arena():
     with cols[2]:
         st.write("")
         st.write("")
-        create_btn = st.button(
-            "🎲 Tạo quiz", use_container_width=True, key="create_quiz_btn"
-        )
+        create_btn = st.button("🎲 Tạo quiz", use_container_width=True, key="create_quiz_btn")
 
     if create_btn:
         with st.spinner("Đang tạo quiz..."):
@@ -158,32 +150,24 @@ def render_quiz_arena():
 
             try:
                 if generator is not None:
-                    quiz_text = generator.run(
-                        topic_content, num_questions=num_questions
-                    )
+                    quiz_text = generator.run(topic_content, num_questions=num_questions)
                 else:
                     state = st.session_state.orchestrator.run(topic_content)
                     quiz_text = state.final_answer
             except RuntimeError as e:
                 if "quota" in str(e).lower():
-                    st.warning(
-                        "⚠️ Gemini hết quota, chuyển sang Ollama local để tạo quiz."
-                    )
+                    st.warning("⚠️ Gemini hết quota, chuyển sang Ollama local để tạo quiz.")
                     _switch_quiz_model_to_ollama()
                     generator = st.session_state.orchestrator.tools.get("generate_quiz")
                     if generator is not None:
-                        quiz_text = generator.run(
-                            topic_content, num_questions=num_questions
-                        )
+                        quiz_text = generator.run(topic_content, num_questions=num_questions)
                     else:
                         state = st.session_state.orchestrator.run(topic_content)
                         quiz_text = state.final_answer
                 else:
                     raise
 
-        parsed_quiz = _parse_quiz_from_text(
-            quiz_text, topic_label=selected_topic["label"]
-        )
+        parsed_quiz = _parse_quiz_from_text(quiz_text, topic_label=selected_topic["label"])
         if not parsed_quiz and st.session_state.model_choice != "ollama":
             st.warning("Quiz trả về không parse được, thử lại với Ollama local...")
             _switch_quiz_model_to_ollama()
@@ -193,9 +177,7 @@ def render_quiz_arena():
             else:
                 state = st.session_state.orchestrator.run(topic_content)
                 quiz_text = state.final_answer
-            parsed_quiz = _parse_quiz_from_text(
-                quiz_text, topic_label=selected_topic["label"]
-            )
+            parsed_quiz = _parse_quiz_from_text(quiz_text, topic_label=selected_topic["label"])
 
         if parsed_quiz:
             _add_quiz_to_history(parsed_quiz)
@@ -290,9 +272,7 @@ def render_quiz_arena():
             st.markdown("</div>", unsafe_allow_html=True)
 
             if not st.session_state.get("quiz_submitted"):
-                if st.button(
-                    "✅ Nộp bài", use_container_width=True, key=f"submit_quiz_{index}"
-                ):
+                if st.button("✅ Nộp bài", use_container_width=True, key=f"submit_quiz_{index}"):
                     selected_index = question["options"].index(choice)
                     is_correct = selected_index == question["correct_index"]
                     explanation = question.get("explanation", "")
@@ -313,9 +293,7 @@ def render_quiz_arena():
                     st.session_state.quiz_feedback = {
                         "is_correct": is_correct,
                         "explanation": explanation,
-                        "correct_answer": question["options"][
-                            question["correct_index"]
-                        ],
+                        "correct_answer": question["options"][question["correct_index"]],
                     }
                     st.session_state.quiz_results.append(is_correct)
                     st.rerun()
@@ -340,16 +318,12 @@ def render_quiz_arena():
                         st.session_state.quiz_feedback = None
                         st.rerun()
                 else:
-                    if st.button(
-                        "🏁 Hoàn thành", use_container_width=True, key="finish_quiz"
-                    ):
+                    if st.button("🏁 Hoàn thành", use_container_width=True, key="finish_quiz"):
                         st.session_state.quiz_finished = True
                         st.rerun()
 
 
-def _parse_quiz_from_text(
-    text: str, topic_label: str = "Chủ đề chung"
-) -> list[dict] | None:
+def _parse_quiz_from_text(text: str, topic_label: str = "Chủ đề chung") -> list[dict] | None:
     """Parse quiz từ output của Agent thành danh sách câu hỏi."""
     blocks = re.findall(
         r"^Câu\s*\d+:\s*(.*?)(?=^Câu\s*\d+:|\Z)", text, flags=re.MULTILINE | re.DOTALL
@@ -391,9 +365,7 @@ def _parse_quiz_from_text(
         if sum(counts) != 1:
             return None
         correct_index = next(i for i, count in enumerate(counts) if count == 1)
-        cleaned_options = [
-            re.sub(marker, "", opt, flags=re.IGNORECASE).strip() for opt in options
-        ]
+        cleaned_options = [re.sub(marker, "", opt, flags=re.IGNORECASE).strip() for opt in options]
         if any(not option for option in cleaned_options):
             return None
 

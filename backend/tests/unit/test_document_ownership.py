@@ -12,9 +12,7 @@ from study_supporter.domain.errors import EvidenceNotFound
 @pytest.fixture
 def repository(monkeypatch):
     engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(
-        engine
-    )  # Test fixture only; application boot uses Alembic.
+    Base.metadata.create_all(engine)  # Test fixture only; application boot uses Alembic.
     session_factory = sessionmaker(bind=engine)
     monkeypatch.setattr(documents, "SessionLocal", session_factory)
     with session_factory() as session:

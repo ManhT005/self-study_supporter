@@ -19,9 +19,7 @@ def test_invalid_structured_answer(answer):
 @pytest.mark.parametrize("options", [["a", "b"], ["a", "b", "c", "d", "e"]])
 def test_four_options_required(options):
     with pytest.raises(ValidationError):
-        QuizQuestion(
-            question="Q?", options=options, correct_answer_index=0, explanation="why"
-        )
+        QuizQuestion(question="Q?", options=options, correct_answer_index=0, explanation="why")
 
 
 @pytest.mark.parametrize(

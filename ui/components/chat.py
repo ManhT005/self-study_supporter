@@ -25,9 +25,7 @@ def render_chat():
 
     if user_question:
         if st.session_state.orchestrator is None:
-            st.session_state.chat_history.append(
-                {"role": "user", "content": user_question}
-            )
+            st.session_state.chat_history.append({"role": "user", "content": user_question})
             with st.chat_message("user"):
                 st.markdown(user_question)
             with st.chat_message("assistant"):
@@ -85,6 +83,4 @@ def _handle_message(user_question: str) -> None:
             unsafe_allow_html=True,
         )
 
-    st.session_state.chat_history.append(
-        {"role": "assistant", "content": state.final_answer}
-    )
+    st.session_state.chat_history.append({"role": "assistant", "content": state.final_answer})

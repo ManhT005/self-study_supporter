@@ -80,6 +80,8 @@ Thumbs.db
 # 6. TESTING & EVALUATION LOGS
 # ==========================================
 .pytest_cache/
+pytest-cache-files-*/
+.ruff_cache/
 .coverage
 htmlcov/
 *.log

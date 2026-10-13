@@ -51,9 +51,7 @@ class MultiProviderLLM(LLMAdapter):
             except QuotaExhaustedError as e:
                 # Quota theo NGÀY → đánh dấu "chết" tới cuối ngày
                 self._dead_since[i] = time.time()
-                print(
-                    f"🚫 [{provider_name}] Hết quota ngày, chuyển provider tiếp theo."
-                )
+                print(f"🚫 [{provider_name}] Hết quota ngày, chuyển provider tiếp theo.")
                 last_error = e
                 continue
 

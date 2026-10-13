@@ -84,9 +84,7 @@ def hybrid_search(
     # ==========================
 
     results = [
-        bm25_index.chunk_map[chunk_id]
-        for chunk_id in top_ids
-        if chunk_id in bm25_index.chunk_map
+        bm25_index.chunk_map[chunk_id] for chunk_id in top_ids if chunk_id in bm25_index.chunk_map
     ]
 
     return results

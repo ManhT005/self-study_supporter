@@ -1,0 +1,13 @@
+{
+  "evidence": [
+    {
+      "document_id": "fixture-doc-a",
+      "chunk_id": "fixture-chunk-1",
+      "text": "First sentence. Second sentence.",
+      "source": "fixture.pdf",
+      "page_start": 1,
+      "page_end": 1,
+      "score": 0.03278688524590164
+    }
+  ]
+}

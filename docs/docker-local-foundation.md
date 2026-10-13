@@ -2,13 +2,18 @@
 
 This branch packages the **existing Streamlit implementation** before the FastAPI + Next.js redesign. It is not yet a public-production release.
 
+Phase 0 continuation: use [current Docker operations](operations/docker.md),
+[migration instructions](operations/migrations.md), and [executed evidence](reports/p0-acceptance.md).
+The app now receives separate PostgreSQL fields (reserved password characters work),
+and a one-shot Alembic service runs before app startup. Existing schemas require reviewed adoption.
+
 ## Start (Windows PowerShell)
 
 ```powershell
 git fetch origin
 git switch feature/docker-local-foundation
 Copy-Item .env.docker.example .env.docker
-# Edit .env.docker; replace POSTGRES_PASSWORD with a strong URL-safe password.
+# Edit .env.docker; replace POSTGRES_PASSWORD with a strong password.
 docker compose --env-file .env.docker config --quiet
 docker compose --env-file .env.docker up -d --build
 docker compose --env-file .env.docker ps

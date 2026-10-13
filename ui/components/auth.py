@@ -22,9 +22,7 @@ def render_login_page():
         with tab_login:
             with st.form("login_form"):
                 username = st.text_input("Tên đăng nhập", key="login_username")
-                password = st.text_input(
-                    "Mật khẩu", type="password", key="login_password"
-                )
+                password = st.text_input("Mật khẩu", type="password", key="login_password")
                 submitted = st.form_submit_button("Đăng nhập", use_container_width=True)
 
             if submitted:
@@ -38,15 +36,11 @@ def render_login_page():
         with tab_register:
             with st.form("register_form"):
                 new_username = st.text_input("Tên đăng nhập", key="register_username")
-                new_password = st.text_input(
-                    "Mật khẩu", type="password", key="register_password"
-                )
+                new_password = st.text_input("Mật khẩu", type="password", key="register_password")
                 confirm_password = st.text_input(
                     "Xác nhận mật khẩu", type="password", key="register_confirm"
                 )
-                submitted = st.form_submit_button(
-                    "Tạo tài khoản", use_container_width=True
-                )
+                submitted = st.form_submit_button("Tạo tài khoản", use_container_width=True)
 
             if submitted:
                 if new_password != confirm_password:

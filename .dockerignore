@@ -20,5 +20,10 @@ data
 *.sqlite3
 *.log
 tests
+**/tests
+**/build
+**/dist
+**/*.egg-info
+**/pytest-cache-files-*
 *.zip
 *.pdf

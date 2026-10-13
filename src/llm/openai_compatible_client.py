@@ -90,9 +90,7 @@ class OpenAICompatibleClient(LLMAdapter):
                     # Per-minute rate limit → retry with backoff
                     if attempt < self.max_retries - 1:
                         wait = self._extract_retry_after(response, default=15.0)
-                        print(
-                            f"⏳ [{self.provider_name}] 429 (per-minute), đợi {wait:.1f}s..."
-                        )
+                        print(f"⏳ [{self.provider_name}] 429 (per-minute), đợi {wait:.1f}s...")
                         time.sleep(wait)
                         continue
                     else:
@@ -173,6 +171,4 @@ class OpenAICompatibleClient(LLMAdapter):
         return any(indicator in error_msg for indicator in daily_indicators)
 
     def __repr__(self):
-        return (
-            f"OpenAICompatibleClient(provider={self.provider_name}, model={self.model})"
-        )
+        return f"OpenAICompatibleClient(provider={self.provider_name}, model={self.model})"

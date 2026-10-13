@@ -40,13 +40,9 @@ def violations(source: str, module: str) -> list[str]:
                 if target_layer and target_layer not in ALLOWED[layer]:
                     failures.append(f"{module}:{node.lineno}: forbidden layer {target}")
             elif (
-                layer in PURE
-                and root not in sys.stdlib_module_names
-                and root != "study_supporter"
+                layer in PURE and root not in sys.stdlib_module_names and root != "study_supporter"
             ):
-                failures.append(
-                    f"{module}:{node.lineno}: non-stdlib core import {target}"
-                )
+                failures.append(f"{module}:{node.lineno}: non-stdlib core import {target}")
     return failures
 
 

@@ -11,9 +11,7 @@ class SearchDocsTool(BaseTool):
         "top_k": "Số lượng đoạn văn bản liên quan cần trả về (mặc định 3)",
     }
 
-    def __init__(
-        self, vector_store, bm25_index, embed_query_fn, document_id: str | None = None
-    ):
+    def __init__(self, vector_store, bm25_index, embed_query_fn, document_id: str | None = None):
         self.vector_store = vector_store
         self.bm25_index = bm25_index
         self.embed_query_fn = embed_query_fn

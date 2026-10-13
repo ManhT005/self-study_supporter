@@ -73,9 +73,7 @@ class GeminiClient(LLMAdapter):
 
             except ClientError as e:
                 if getattr(e, "code", getattr(e, "status_code", None)) in {401, 403}:
-                    raise ProviderAuthenticationError(
-                        "Provider authentication failed"
-                    ) from None
+                    raise ProviderAuthenticationError("Provider authentication failed") from None
                 if getattr(e, "code", getattr(e, "status_code", None)) != 429:
                     raise
 

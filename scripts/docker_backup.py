@@ -85,9 +85,7 @@ def main():
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         if manifest["project"] == args.project_name:
             parser.error("Restore requires a different disposable Compose project.")
-        existing = run(
-            compose + ["ps", "-a", "-q"], capture_output=True, text=True
-        ).stdout
+        existing = run(compose + ["ps", "-a", "-q"], capture_output=True, text=True).stdout
         volumes = run(
             [
                 "docker",
@@ -101,9 +99,7 @@ def main():
             text=True,
         ).stdout
         if existing.strip() or volumes.strip():
-            parser.error(
-                "Target must be a fresh project with no containers or volumes."
-            )
+            parser.error("Target must be a fresh project with no containers or volumes.")
         run(compose + ["up", "-d", "--wait", "db"])
         with (directory / "postgres.dump").open("rb") as source:
             run(
@@ -114,8 +110,7 @@ def main():
                     "db",
                     "sh",
                     "-c",
-                    'pg_restore --exit-on-error --no-owner -U "$POSTGRES_USER" '
-                    '-d "$POSTGRES_DB"',
+                    'pg_restore --exit-on-error --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB"',
                 ],
                 stdin=source,
             )
@@ -137,9 +132,7 @@ def main():
                 ],
                 stdin=source,
             )
-        print(
-            "Restored. Set a free APP_PORT in the target env file before starting app."
-        )
+        print("Restored. Set a free APP_PORT in the target env file before starting app.")
 
 
 if __name__ == "__main__":
