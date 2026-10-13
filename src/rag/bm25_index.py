@@ -1,24 +1,19 @@
-from rank_bm25 import BM25Okapi
 from src.rag.schemas import Chunk
+
 
 class BM25Index:
     def __init__(self, chunks: list[Chunk]):
+        from rank_bm25 import BM25Okapi
         # TODO: tokenize text của từng chunk (đơn giản: .lower().split())
         # build self.bm25 = BM25Okapi(tokenized_corpus)
-        
+
         self.chunks = chunks
 
         # Dùng để map chunk_id -> Chunk khi hybrid search
-        self.chunk_map = {
-            chunk.chunk_id: chunk
-            for chunk in chunks
-        }
+        self.chunk_map = {chunk.chunk_id: chunk for chunk in chunks}
 
         # Tokenize toàn bộ corpus
-        tokenized_corpus = [
-            chunk.text.lower().split()
-            for chunk in chunks
-        ]
+        tokenized_corpus = [chunk.text.lower().split() for chunk in chunks]
 
         self.bm25 = BM25Okapi(tokenized_corpus)
 

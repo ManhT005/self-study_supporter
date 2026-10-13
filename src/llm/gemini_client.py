@@ -4,7 +4,13 @@ from google.genai.types import GenerateContentConfig
 from google.genai.errors import ClientError
 
 from src.llm.llm_adapter import LLMAdapter, ChatResponse
-from src.rag.embedding_provider import RateLimiter, _extract_retry_delay, _get_quota_period
+from src.rag.embedding_provider import (
+    RateLimiter,
+    _extract_retry_delay,
+    _get_quota_period,
+)
+from src.llm.errors import ProviderAuthenticationError
+from src.llm.openai_compatible_client import QuotaExhaustedError
 
 
 class GeminiClient(LLMAdapter):
@@ -30,7 +36,7 @@ class GeminiClient(LLMAdapter):
 
     def chat(self, messages, system_prompt=None, stop_sequences=None) -> ChatResponse:
         contents = self._to_gemini_contents(messages)
-        config = GenerateContentConfig(         
+        config = GenerateContentConfig(
             system_instruction=system_prompt,
             stop_sequences=stop_sequences,
         )
@@ -39,7 +45,9 @@ class GeminiClient(LLMAdapter):
             self.rate_limiter.wait_if_needed()
             try:
                 response = self.client.models.generate_content(
-                    model=self.model, contents=contents, config=config,
+                    model=self.model,
+                    contents=contents,
+                    config=config,
                 )
 
                 finish_reason = None
@@ -59,15 +67,21 @@ class GeminiClient(LLMAdapter):
                         "total_tokens": response.usage_metadata.total_token_count,
                     }
 
-                return ChatResponse(text=text, usage=usage, finish_reason=finish_reason, raw=response)
+                return ChatResponse(
+                    text=text, usage=usage, finish_reason=finish_reason, raw=response
+                )
 
-            except ClientError as e:              
-                if getattr(e, "status_code", None) != 429:
+            except ClientError as e:
+                if getattr(e, "code", getattr(e, "status_code", None)) in {401, 403}:
+                    raise ProviderAuthenticationError(
+                        "Provider authentication failed"
+                    ) from None
+                if getattr(e, "code", getattr(e, "status_code", None)) != 429:
                     raise
 
                 period_type = _get_quota_period(e)
                 if period_type == "day":
-                    raise RuntimeError(
+                    raise QuotaExhaustedError(
                         "Hết quota generateContent theo NGÀY (free tier). "
                         "Đổi sang OllamaClient hoặc đợi reset."
                     ) from e

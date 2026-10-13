@@ -3,6 +3,7 @@ import streamlit as st
 import tempfile
 import os
 import time
+import html
 
 import google.genai as genai
 
@@ -11,8 +12,11 @@ from src.llm.multi_provider_llm import MultiProviderLLM
 
 from src.rag.pdf_parser import parse_pdf
 from src.rag.chunker import (
-    flatten_pages_to_sentences, embed_sentences,
-    compute_distances, compute_breakpoints, group_sentences_into_chunks,
+    flatten_pages_to_sentences,
+    embed_sentences,
+    compute_distances,
+    compute_breakpoints,
+    group_sentences_into_chunks,
 )
 from src.rag.embedder import embed_chunks
 from src.rag.vector_store import VectorStore
@@ -31,9 +35,14 @@ from src.agent.tools.get_progress import GetProgressTool
 from src.memory.long_term import LongTermMemory
 from src.memory.progress_db import ProgressDB
 from src.documents.document_service import (
-    create_document, update_document_status, update_document_graph, get_latest_ready_document,
+    create_document,
+    update_document_status,
+    update_document_graph,
+    get_latest_ready_document,
 )
 from src.graph.schemas import ConceptGraph
+from src.documents.upload_validation import validate_pdf_upload
+from study_supporter.domain.errors import DocumentUnsupported, EmbeddingUnavailable
 
 
 def _try_resume_existing_documents():
@@ -71,7 +80,7 @@ def _try_resume_existing_documents():
     progress_db = ProgressDB()
 
     tools = [
-        SearchDocsTool(store, bm25_index, embed_query_fn),
+        SearchDocsTool(store, bm25_index, embed_query_fn, document_id=str(doc["id"])),
         GenerateQuizTool(llm),
         SaveNoteTool(long_term_memory, str(st.session_state.user_id)),
         GetProgressTool(progress_db, str(st.session_state.user_id)),
@@ -84,13 +93,15 @@ def _try_resume_existing_documents():
     st.session_state.orchestrator = orchestrator
     st.session_state.progress_db = progress_db
     st.session_state.current_document_id = doc["id"]
-    st.session_state.current_sources = [doc["filename"], "Knowledge graph", "Progress notes"]
+    st.session_state.current_sources = [doc["filename"]]
     st.session_state.graph_source_chunks = chunks[:5]
 
     if doc["concept_graph_json"]:
         graph = ConceptGraph(**doc["concept_graph_json"])
         st.session_state.concept_graph = graph
-        st.session_state.learning_path = [] if detect_cycles(graph) else suggest_learning_path(graph)
+        st.session_state.learning_path = (
+            [] if detect_cycles(graph) else suggest_learning_path(graph)
+        )
     else:
         st.session_state.concept_graph = None
         st.session_state.learning_path = []
@@ -104,11 +115,14 @@ def render_sidebar():
             <span style="font-size:1.5rem;">👤</span>
             <span style="font-size:1rem; color:#1e293b; font-weight:500;">{}</span>
         </div>
-        """.format(st.session_state.username),
+        """.format(html.escape(st.session_state.username)),
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div class='card' style='padding:0.7rem 0.8rem; margin-bottom: 0.6rem;'><strong>Model</strong></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='card' style='padding:0.7rem 0.8rem; margin-bottom: 0.6rem;'><strong>Model</strong></div>",
+        unsafe_allow_html=True,
+    )
     _MODE_OPTIONS = ["Auto (khuyến nghị)", "Gemini", "Ollama"]
     _MODE_MAP = {"Auto (khuyến nghị)": "auto", "Gemini": "gemini", "Ollama": "ollama"}
     _REVERSE_MAP = {"auto": 0, "gemini": 1, "ollama": 2}
@@ -121,7 +135,10 @@ def render_sidebar():
     )
     new_choice = _MODE_MAP[model_label]
 
-    if new_choice != st.session_state.model_choice and st.session_state.orchestrator is not None:
+    if (
+        new_choice != st.session_state.model_choice
+        and st.session_state.orchestrator is not None
+    ):
         st.session_state.model_choice = new_choice
         _rebuild_orchestrator_with_new_llm()
         st.rerun()
@@ -148,7 +165,9 @@ def render_sidebar():
 
     _try_resume_existing_documents()
 
-    uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], label_visibility="collapsed", key="pdf_upload")
+    uploaded_file = st.file_uploader(
+        "Upload PDF", type=["pdf"], label_visibility="collapsed", key="pdf_upload"
+    )
     if uploaded_file is not None:
         file_bytes = uploaded_file.read()
         uploaded_file_id = hashlib.sha256(file_bytes).hexdigest()
@@ -159,37 +178,48 @@ def render_sidebar():
 
         if should_process:
             st.session_state.is_processing = True
-            _process_uploaded_file_with_progress(uploaded_file, file_bytes)
-            st.session_state.last_uploaded_file_id = uploaded_file_id
-            st.session_state.is_processing = False
-            st.session_state.current_page = "assistant"
-            st.rerun()
-
-
+            try:
+                _process_uploaded_file_with_progress(uploaded_file, file_bytes)
+            except (DocumentUnsupported, EmbeddingUnavailable) as exc:
+                st.error(str(exc))
+            except Exception:
+                st.error(
+                    "Xử lý tài liệu thất bại. Kiểm tra database và cấu hình AI rồi thử lại."
+                )
+            else:
+                st.session_state.last_uploaded_file_id = uploaded_file_id
+                st.session_state.current_page = "assistant"
+                st.rerun()
+            finally:
+                st.session_state.is_processing = False
 
     if st.session_state.is_processing:
         st.info("Processing new document... please wait.")
 
     if st.session_state.orchestrator is not None:
-        st.markdown("<div class='card' style='padding:0.7rem 0.8rem;'><strong>Sources</strong></div>", unsafe_allow_html=True)
-        sources = st.session_state.get("current_sources") or ["Uploaded PDF", "Knowledge graph", "Progress notes"]
+        st.markdown(
+            "<div class='card' style='padding:0.7rem 0.8rem;'><strong>Sources</strong></div>",
+            unsafe_allow_html=True,
+        )
+        sources = st.session_state.get("current_sources") or []
         for source in sources:
-            st.markdown(f"<span class='chip'>{source}</span>", unsafe_allow_html=True)
-
-        st.markdown("<div class='card' style='padding:0.7rem 0.8rem; margin-top:0.3rem;'><strong>Thought log</strong></div>", unsafe_allow_html=True)
-        if st.session_state.get("last_scratchpad"):
-            st.text_area("Thought log", st.session_state.last_scratchpad, height=120, disabled=True, label_visibility="collapsed")
-        else:
-            st.caption("No activity yet")
+            st.markdown(
+                f"<span class='chip'>{html.escape(source)}</span>",
+                unsafe_allow_html=True,
+            )
 
         if st.session_state.get("graph_building"):
-            st.caption("Đang xây dựng lộ trình học... (xem chi tiết ở tab Learning Path)")
+            st.caption(
+                "Đang xây dựng lộ trình học... (xem chi tiết ở tab Learning Path)"
+            )
 
 
 def _rebuild_orchestrator_with_new_llm():
     """Đổi LLM mà KHÔNG re-embed tài liệu — chỉ tạo lại orchestrator + cập nhật tool cần llm riêng."""
     llm = _get_llm_client()
-    st.session_state.llm_client = llm  # để trigger_graph_build() lấy lại dùng cho thread nền
+    st.session_state.llm_client = (
+        llm  # để trigger_graph_build() lấy lại dùng cho thread nền
+    )
 
     old_tools = list(st.session_state.orchestrator.tools.values())
     for tool in old_tools:
@@ -197,6 +227,7 @@ def _rebuild_orchestrator_with_new_llm():
             tool.llm = llm
 
     st.session_state.orchestrator = ReActOrchestrator(llm, tools=old_tools)
+
 
 def _get_llm_client():
     """Khởi tạo LLM theo lựa chọn của người dùng. Hỗ trợ 3 chế độ: auto / gemini / ollama."""
@@ -216,7 +247,9 @@ def _build_gemini_client():
     """Khởi tạo GeminiClient, fallback Ollama nếu thiếu key."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        st.warning("Không tìm thấy GEMINI_API_KEY trong .env, chuyển sang Ollama local.")
+        st.warning(
+            "Không tìm thấy GEMINI_API_KEY trong .env, chuyển sang Ollama local."
+        )
         st.session_state.model_choice = "ollama"
         return OllamaClient(model="qwen2.5:1.5b")
     try:
@@ -241,57 +274,67 @@ def _build_multi_provider_llm():
     if gemini_key:
         try:
             gemini_client_raw = genai.Client(api_key=gemini_key)
-            providers.append(GeminiClient(gemini_client_raw, model="gemini-3-flash-preview"))
+            providers.append(
+                GeminiClient(gemini_client_raw, model="gemini-3-flash-preview")
+            )
         except Exception as e:
             print(f"⚠️ Bỏ qua Gemini (lỗi khởi tạo): {e}")
 
     # 2. Groq (tốc độ nhanh, RPM khá)
     groq_key = os.getenv("GROQ_API_KEY")
     if groq_key:
-        providers.append(OpenAICompatibleClient(
-            base_url="https://api.groq.com/openai/v1",
-            api_key=groq_key,
-            model="llama-3.3-70b-versatile",
-            provider_name="Groq",
-            max_calls=25,
-            period=60.0,
-        ))
+        providers.append(
+            OpenAICompatibleClient(
+                base_url="https://api.groq.com/openai/v1",
+                api_key=groq_key,
+                model="llama-3.3-70b-versatile",
+                provider_name="Groq",
+                max_calls=25,
+                period=60.0,
+            )
+        )
 
     # 3. Cerebras (token/ngày lớn)
     cerebras_key = os.getenv("CEREBRAS_API_KEY")
     if cerebras_key:
-        providers.append(OpenAICompatibleClient(
-            base_url="https://api.cerebras.ai/v1",
-            api_key=cerebras_key,
-            model="llama-3.3-70b",
-            provider_name="Cerebras",
-            max_calls=25,
-            period=60.0,
-        ))
+        providers.append(
+            OpenAICompatibleClient(
+                base_url="https://api.cerebras.ai/v1",
+                api_key=cerebras_key,
+                model="llama-3.3-70b",
+                provider_name="Cerebras",
+                max_calls=25,
+                period=60.0,
+            )
+        )
 
     # 4. GitHub Models
     github_token = os.getenv("GITHUB_TOKEN")
     if github_token:
-        providers.append(OpenAICompatibleClient(
-            base_url="https://models.inference.ai.azure.com",
-            api_key=github_token,
-            model="gpt-4o-mini",
-            provider_name="GitHub Models",
-            max_calls=10,
-            period=60.0,
-        ))
+        providers.append(
+            OpenAICompatibleClient(
+                base_url="https://models.inference.ai.azure.com",
+                api_key=github_token,
+                model="gpt-4o-mini",
+                provider_name="GitHub Models",
+                max_calls=10,
+                period=60.0,
+            )
+        )
 
     # 5. OpenRouter (tổng hợp model mở)
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     if openrouter_key:
-        providers.append(OpenAICompatibleClient(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=openrouter_key,
-            model="meta-llama/llama-3.3-70b-instruct:free",
-            provider_name="OpenRouter",
-            max_calls=15,
-            period=60.0,
-        ))
+        providers.append(
+            OpenAICompatibleClient(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=openrouter_key,
+                model="meta-llama/llama-3.3-70b-instruct:free",
+                provider_name="OpenRouter",
+                max_calls=15,
+                period=60.0,
+            )
+        )
 
     # 6. Ollama cục bộ (luôn có, luôn cuối cùng)
     providers.append(OllamaClient(model="qwen2.5:1.5b"))
@@ -302,14 +345,21 @@ def _build_multi_provider_llm():
         return providers[0]
 
     provider_names = [MultiProviderLLM._get_provider_name(p) for p in providers]
-    print(f"🔄 MultiProviderLLM khởi tạo với {len(providers)} providers: {provider_names}")
+    print(
+        f"🔄 MultiProviderLLM khởi tạo với {len(providers)} providers: {provider_names}"
+    )
     return MultiProviderLLM(providers)
 
 
 @st.cache_resource
 def _get_embedding_provider() -> LocalEmbeddingProvider:
     """Singleton cached — model bge-m3 tải 1 lần duy nhất, giữ nguyên qua mọi session."""
-    return LocalEmbeddingProvider()
+    try:
+        return LocalEmbeddingProvider()
+    except Exception as exc:
+        raise EmbeddingUnavailable(
+            "Không tải được model embedding. Kiểm tra cache và kết nối mạng."
+        ) from exc
 
 
 def _reset_for_new_document():
@@ -335,7 +385,9 @@ def trigger_graph_build():
     """Tạo/rebuild lộ trình học đồng bộ — kết quả hiển thị ngay, không cần rerun."""
     chunks_for_graph = st.session_state.get("graph_source_chunks")
     if not chunks_for_graph:
-        st.warning("Không có dữ liệu nội dung để xây lộ trình học. Hãy upload lại tài liệu.")
+        st.warning(
+            "Không có dữ liệu nội dung để xây lộ trình học. Hãy upload lại tài liệu."
+        )
         return
 
     llm = st.session_state.get("llm_client")
@@ -358,7 +410,9 @@ def trigger_graph_build():
             # Persist to Postgres
             doc_id = st.session_state.get("current_document_id")
             if doc_id and graph and graph.nodes:
-                update_document_graph(doc_id, graph.model_dump())
+                update_document_graph(
+                    doc_id, graph.model_dump(), user_id=int(st.session_state.user_id)
+                )
         except Exception as e:
             st.session_state.concept_graph = None
             st.session_state.learning_path = []
@@ -370,6 +424,10 @@ def trigger_graph_build():
 def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
     """Pipeline xử lý tài liệu với progress UI chi tiết từng bước."""
     t_start = time.time()
+    validate_pdf_upload(
+        uploaded_file.name, getattr(uploaded_file, "type", None), file_bytes
+    )
+    tmp_path = None
 
     user_id_int = int(st.session_state.user_id)
     document_id, collection_name = create_document(user_id_int, uploaded_file.name)
@@ -393,14 +451,22 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
 
             parse_result = parse_pdf(tmp_path, on_progress=on_parse_progress)
             pages = parse_result.pages
+            for page in pages:
+                page.source = uploaded_file.name
 
-            status.write(f"✓ Đọc xong: {len(pages)} trang nội dung / {parse_result.total_pages} trang tổng"
-                         f" ({parse_result.skipped_pages} trang trắng bỏ qua)")
+            status.write(
+                f"✓ Đọc xong: {len(pages)} trang nội dung / {parse_result.total_pages} trang tổng"
+                f" ({parse_result.skipped_pages} trang trắng bỏ qua)"
+            )
             progress_bar.progress(10, text="Parse PDF hoàn tất")
 
             # ── Bước 2: Tách câu ──────────────────────────────────────
             status.update(label="✂️ Đang tách câu...")
             sentences = flatten_pages_to_sentences(pages)
+            if not sentences:
+                raise DocumentUnsupported(
+                    "PDF không có câu văn bản sử dụng được; tài liệu scan cần OCR."
+                )
             status.write(f"✓ Tách được {len(sentences)} câu")
             progress_bar.progress(15, text=f"{len(sentences)} câu đã tách")
 
@@ -425,8 +491,12 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             status.update(label="🔗 Đang phân đoạn ngữ nghĩa...")
             distances = compute_distances(sentences)
             breakpoints = compute_breakpoints(sentences, distances, percentile=95)
-            chunks = group_sentences_into_chunks(sentences, breakpoints, min_sentences=2, max_chars=800)
-            status.write(f"✓ Tạo được {len(chunks)} chunk từ {len(breakpoints)} breakpoint")
+            chunks = group_sentences_into_chunks(
+                sentences, breakpoints, min_sentences=2, max_chars=800
+            )
+            status.write(
+                f"✓ Tạo được {len(chunks)} chunk từ {len(breakpoints)} breakpoint"
+            )
             progress_bar.progress(65, text=f"{len(chunks)} chunks đã tạo")
 
             # ── Bước 5: Lưu vào VectorStore ──────────────────────────
@@ -438,15 +508,24 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             new_chunks = [c for c in chunks if c.chunk_id not in existing_ids]
 
             if new_chunks:
+
                 def on_chunk_embed_progress(current, total):
                     pct = 65 + int((current / total) * 15)
-                    progress_bar.progress(pct, text=f"Embedding chunk {current}/{total}...")
+                    progress_bar.progress(
+                        pct, text=f"Embedding chunk {current}/{total}..."
+                    )
 
-                vectors = embed_chunks(new_chunks, provider, on_progress=on_chunk_embed_progress)
+                vectors = embed_chunks(
+                    new_chunks, provider, on_progress=on_chunk_embed_progress
+                )
                 store.add_chunks(new_chunks, vectors)
-                status.write(f"✓ Lưu {len(new_chunks)} chunk mới (bỏ qua {len(existing_ids)} chunk đã tồn tại)")
+                status.write(
+                    f"✓ Lưu {len(new_chunks)} chunk mới (bỏ qua {len(existing_ids)} chunk đã tồn tại)"
+                )
             else:
-                status.write(f"✓ Tất cả {len(chunks)} chunk đã có trong DB, bỏ qua embedding")
+                status.write(
+                    f"✓ Tất cả {len(chunks)} chunk đã có trong DB, bỏ qua embedding"
+                )
 
             progress_bar.progress(80, text="Lưu vector database hoàn tất")
 
@@ -464,13 +543,17 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
                 return provider.embed([query], task_type="RETRIEVAL_QUERY")[0]
 
             llm = _get_llm_client()
-            st.session_state.llm_client = llm  # để trigger_graph_build() dùng lại đúng LLM này
+            st.session_state.llm_client = (
+                llm  # để trigger_graph_build() dùng lại đúng LLM này
+            )
 
             long_term_memory = LongTermMemory(store, embed_query_fn)
             progress_db = ProgressDB()
 
             tools = [
-                SearchDocsTool(store, bm25_index, embed_query_fn),
+                SearchDocsTool(
+                    store, bm25_index, embed_query_fn, document_id=str(document_id)
+                ),
                 GenerateQuizTool(llm),
                 SaveNoteTool(long_term_memory, str(st.session_state.user_id)),
                 GetProgressTool(progress_db, str(st.session_state.user_id)),
@@ -482,7 +565,7 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             st.session_state.embed_query_fn = embed_query_fn
             st.session_state.orchestrator = orchestrator
             st.session_state.progress_db = progress_db
-            st.session_state.current_sources = [uploaded_file.name, "Knowledge graph", "Progress notes"]
+            st.session_state.current_sources = [uploaded_file.name]
 
             # Cập nhật metadata thật vào Postgres — status='ready' để lần đăng
             # nhập sau (_try_resume_existing_documents) nhận ra và tự khôi phục.
@@ -491,6 +574,7 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
                 status="ready",
                 page_count=parse_result.total_pages,
                 chunk_count=len(all_chunks),
+                user_id=user_id_int,
             )
 
             progress_bar.progress(90, text="Agent sẵn sàng!")
@@ -510,7 +594,9 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
                     st.session_state.learning_path = []
 
                 if document_id and graph and graph.nodes:
-                    update_document_graph(document_id, graph.model_dump())
+                    update_document_graph(
+                        document_id, graph.model_dump(), user_id=user_id_int
+                    )
 
                 status.write("✓ Lộ trình học đã tạo xong!")
             except Exception as e:
@@ -525,13 +611,17 @@ def _process_uploaded_file_with_progress(uploaded_file, file_bytes: bytes):
             # ── Hoàn tất ──────────────────────────────────────────────
             elapsed = time.time() - t_start
             progress_bar.progress(100, text=f"Hoàn tất trong {elapsed:.1f}s!")
-            status.update(label=f" Tài liệu đã sẵn sàng ({elapsed:.1f}s)", state="complete")
+            status.update(
+                label=f" Tài liệu đã sẵn sàng ({elapsed:.1f}s)", state="complete"
+            )
 
-        os.unlink(tmp_path)
-
-    except Exception as e:
+    except Exception:
         # Đánh dấu 'failed' trong Postgres — tránh document bị kẹt vĩnh viễn ở
         # 'processing' nếu có lỗi giữa chừng (bài học từ bug "learning path treo"
         # trước đó: trạng thái không rõ ràng luôn gây khó debug về sau).
-        update_document_status(document_id, status="failed")
+        st.session_state.orchestrator = None
+        update_document_status(document_id, status="failed", user_id=user_id_int)
         raise
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)

@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 
 from src.llm.llm_adapter import LLMAdapter, ChatResponse
 from src.llm.openai_compatible_client import QuotaExhaustedError, RateLimitError
+from src.llm.errors import ProviderAuthenticationError
 
 
 class MultiProviderLLM(LLMAdapter):
@@ -45,28 +46,32 @@ class MultiProviderLLM(LLMAdapter):
                 print(f"✅ [{provider_name}] Phản hồi thành công.")
                 return result
 
+            except ProviderAuthenticationError:
+                raise
             except QuotaExhaustedError as e:
                 # Quota theo NGÀY → đánh dấu "chết" tới cuối ngày
                 self._dead_since[i] = time.time()
-                print(f"🚫 [{provider_name}] Hết quota ngày, chuyển provider tiếp theo. ({e})")
+                print(
+                    f"🚫 [{provider_name}] Hết quota ngày, chuyển provider tiếp theo."
+                )
                 last_error = e
                 continue
 
             except (RateLimitError, RuntimeError) as e:
                 # Quota theo PHÚT hoặc lỗi khác → thử provider kế tiếp ngay
-                print(f"⚠️ [{provider_name}] Lỗi tạm thời, thử provider tiếp: {e}")
+                print(f"⚠️ [{provider_name}] Lỗi tạm thời, thử provider tiếp.")
                 last_error = e
                 continue
 
             except Exception as e:
                 # Lỗi không mong đợi (network, parse, ...) → không chết hẳn, chỉ skip lần này
-                print(f"⚠️ [{provider_name}] Lỗi không xác định, thử provider tiếp: {e}")
+                print(f"⚠️ [{provider_name}] Lỗi không xác định, thử provider tiếp.")
                 last_error = e
                 continue
 
         raise RuntimeError(
             f"Tất cả {len(self.providers)} provider đều không khả dụng. "
-            f"Lỗi cuối: {last_error}"
+            f"Loại lỗi cuối: {type(last_error).__name__}"
         )
 
     def _reset_expired_providers(self):
@@ -96,12 +101,14 @@ class MultiProviderLLM(LLMAdapter):
         for i, provider in enumerate(self.providers):
             name = self._get_provider_name(provider)
             is_dead = i in self._dead_since
-            status.append({
-                "index": i,
-                "name": name,
-                "available": not is_dead,
-                "dead_since": self._dead_since.get(i),
-            })
+            status.append(
+                {
+                    "index": i,
+                    "name": name,
+                    "available": not is_dead,
+                    "dead_since": self._dead_since.get(i),
+                }
+            )
         return status
 
     @staticmethod

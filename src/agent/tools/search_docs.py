@@ -1,5 +1,6 @@
 from src.agent.tools.base import BaseTool
 from src.rag.hybrid_retriever import hybrid_search
+from study_supporter.application.contracts.retrieval import Evidence
 
 
 class SearchDocsTool(BaseTool):
@@ -10,12 +11,17 @@ class SearchDocsTool(BaseTool):
         "top_k": "Số lượng đoạn văn bản liên quan cần trả về (mặc định 3)",
     }
 
-    def __init__(self, vector_store, bm25_index, embed_query_fn):
+    def __init__(
+        self, vector_store, bm25_index, embed_query_fn, document_id: str | None = None
+    ):
         self.vector_store = vector_store
         self.bm25_index = bm25_index
         self.embed_query_fn = embed_query_fn
+        self.document_id = document_id
+        self.last_evidence: list[Evidence] = []
 
     def run(self, query: str, top_k: int = 3) -> str:
+        self.last_evidence = []
         query = query.strip()
         if not query:
             return "Lỗi: câu truy vấn rỗng, không thể tìm kiếm."
@@ -33,6 +39,23 @@ class SearchDocsTool(BaseTool):
 
         results = []
         for chunk in chunks:
+            if (
+                self.document_id
+                and chunk.chunk_id
+                and chunk.source
+                and chunk.page_start
+                and chunk.page_end
+            ):
+                self.last_evidence.append(
+                    Evidence(
+                        chunk.chunk_id,
+                        self.document_id,
+                        chunk.text,
+                        chunk.source,
+                        chunk.page_start,
+                        chunk.page_end,
+                    )
+                )
             page = (
                 f"trang {chunk.page_start}"
                 if chunk.page_start == chunk.page_end

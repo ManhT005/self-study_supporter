@@ -1,5 +1,6 @@
 import streamlit as st
 from src.auth.auth_service import register_user, authenticate_user, AuthError
+from src.auth.session import reset_session_on_logout
 
 
 def render_login_page():
@@ -11,7 +12,7 @@ def render_login_page():
             <p style="color: #64748b; font-size: 1rem;">Học tập cá nhân hoá với AI</p>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
@@ -21,7 +22,9 @@ def render_login_page():
         with tab_login:
             with st.form("login_form"):
                 username = st.text_input("Tên đăng nhập", key="login_username")
-                password = st.text_input("Mật khẩu", type="password", key="login_password")
+                password = st.text_input(
+                    "Mật khẩu", type="password", key="login_password"
+                )
                 submitted = st.form_submit_button("Đăng nhập", use_container_width=True)
 
             if submitted:
@@ -35,9 +38,15 @@ def render_login_page():
         with tab_register:
             with st.form("register_form"):
                 new_username = st.text_input("Tên đăng nhập", key="register_username")
-                new_password = st.text_input("Mật khẩu", type="password", key="register_password")
-                confirm_password = st.text_input("Xác nhận mật khẩu", type="password", key="register_confirm")
-                submitted = st.form_submit_button("Tạo tài khoản", use_container_width=True)
+                new_password = st.text_input(
+                    "Mật khẩu", type="password", key="register_password"
+                )
+                confirm_password = st.text_input(
+                    "Xác nhận mật khẩu", type="password", key="register_confirm"
+                )
+                submitted = st.form_submit_button(
+                    "Tạo tài khoản", use_container_width=True
+                )
 
             if submitted:
                 if new_password != confirm_password:
@@ -53,6 +62,7 @@ def render_login_page():
 
 
 def _log_user_in(user_id: int, username: str) -> None:
+    reset_session_on_logout(st.session_state)
     st.session_state.authenticated = True
     # Giữ dạng string để tương thích các tool/memory hiện có (get_progress,
     # save_note, LongTermMemory...) — chúng vốn được thiết kế nhận user_id kiểu
@@ -63,9 +73,5 @@ def _log_user_in(user_id: int, username: str) -> None:
 
 def render_logout_button():
     if st.button("Đăng xuất", key="logout_btn", use_container_width=True):
-        for key in (
-            "authenticated", "user_id", "username", "orchestrator", "chat_history",
-            "concept_graph", "learning_path", "current_quiz", "llm_client",
-        ):
-            st.session_state.pop(key, None)
+        reset_session_on_logout(st.session_state)
         st.rerun()

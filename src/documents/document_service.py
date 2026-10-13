@@ -1,5 +1,6 @@
 from src.db.database import SessionLocal, Base, engine
 from src.db.models import Document
+from study_supporter.domain.errors import EvidenceNotFound
 
 Base.metadata.create_all(engine)
 
@@ -13,10 +14,14 @@ def create_document(user_id: int, filename: str) -> tuple[int, str]:
     """
     session = SessionLocal()
     try:
-        doc = Document(user_id=user_id, filename=filename, chroma_collection_name="", status="processing")
+        doc = Document(
+            user_id=user_id,
+            filename=filename,
+            chroma_collection_name="",
+            status="processing",
+        )
         session.add(doc)
-        session.commit()
-        session.refresh(doc)
+        session.flush()
 
         collection_name = f"documents_{doc.id}"
         doc.chroma_collection_name = collection_name
@@ -32,12 +37,21 @@ def update_document_status(
     status: str,
     page_count: int | None = None,
     chunk_count: int | None = None,
+    *,
+    user_id: int,
 ) -> None:
+    if status not in {"processing", "ready", "failed"}:
+        raise ValueError("Invalid document status")
     session = SessionLocal()
     try:
-        doc = session.query(Document).filter_by(id=document_id).first()
+        doc = session.query(Document).filter_by(id=document_id, user_id=user_id).first()
         if doc is None:
-            return
+            raise EvidenceNotFound("Document not found")
+        if (
+            status == "ready"
+            and (chunk_count if chunk_count is not None else doc.chunk_count or 0) < 1
+        ):
+            raise ValueError("READY requires indexed chunks")
         doc.status = status
         if page_count is not None:
             doc.page_count = page_count
@@ -48,12 +62,14 @@ def update_document_status(
         session.close()
 
 
-def update_document_graph(document_id: int, graph_json: dict | None) -> None:
+def update_document_graph(
+    document_id: int, graph_json: dict | None, *, user_id: int
+) -> None:
     session = SessionLocal()
     try:
-        doc = session.query(Document).filter_by(id=document_id).first()
+        doc = session.query(Document).filter_by(id=document_id, user_id=user_id).first()
         if doc is None:
-            return
+            raise EvidenceNotFound("Document not found")
         doc.concept_graph_json = graph_json
         session.commit()
     finally:

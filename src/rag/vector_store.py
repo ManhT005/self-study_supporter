@@ -1,11 +1,12 @@
 import os
-import chromadb
 
 from src.rag.schemas import Chunk
 
 
 class VectorStore:
-    def __init__(self, persist_path: str = "data/chroma_db", collection_name: str = "documents"):
+    def __init__(
+        self, persist_path: str = "data/chroma_db", collection_name: str = "documents"
+    ):
         """
         collection_name: do caller quyết định (ví dụ f"documents_{document_id}")
         — mỗi tài liệu 1 collection riêng, cách ly hoàn toàn giữa các tài liệu/user,
@@ -15,6 +16,8 @@ class VectorStore:
         Nếu có biến môi trường CHROMA_SERVER_HOST, kết nối tới ChromaDB server
         thật (self-host, có persistent volume) thay vì lưu file cục bộ.
         """
+        import chromadb
+
         self.persist_path = persist_path
 
         chroma_host = os.getenv("CHROMA_SERVER_HOST")
@@ -39,7 +42,11 @@ class VectorStore:
             embeddings=embeddings,
             documents=[chunk.text for chunk in chunks],
             metadatas=[
-                {"source": chunk.source, "page_start": chunk.page_start, "page_end": chunk.page_end}
+                {
+                    "source": chunk.source,
+                    "page_start": chunk.page_start,
+                    "page_end": chunk.page_end,
+                }
                 for chunk in chunks
             ],
         )
@@ -50,13 +57,17 @@ class VectorStore:
     def load_all_chunks(self) -> list[Chunk]:
         data = self.documents.get(include=["documents", "metadatas"])
         chunks = []
-        for chunk_id, text, meta in zip(data["ids"], data["documents"], data["metadatas"]):
-            chunks.append(Chunk(
-                chunk_id=chunk_id,
-                source=meta["source"],
-                page_start=meta["page_start"],
-                page_end=meta["page_end"],
-                text=text,
-                sentence_count=0,
-            ))
+        for chunk_id, text, meta in zip(
+            data["ids"], data["documents"], data["metadatas"]
+        ):
+            chunks.append(
+                Chunk(
+                    chunk_id=chunk_id,
+                    source=meta["source"],
+                    page_start=meta["page_start"],
+                    page_end=meta["page_end"],
+                    text=text,
+                    sentence_count=0,
+                )
+            )
         return chunks

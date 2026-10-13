@@ -1,7 +1,6 @@
-from datetime import datetime
-
 from src.db.database import Base, engine, SessionLocal
-from src.db.models import QuizAttempt
+from src.db.models import QuizAttempt, Document, User
+from study_supporter.domain.errors import EvidenceNotFound
 
 # Đảm bảo bảng tồn tại (users + quiz_attempts) — idempotent, gọi nhiều lần vô hại
 Base.metadata.create_all(engine)
@@ -17,11 +16,30 @@ class ProgressDB:
     def __init__(self):
         self.Session = SessionLocal
 
-    def record_attempt(self, user_id: str, topic: str, question: str, is_correct: bool) -> None:
+    def record_attempt(
+        self,
+        user_id: str,
+        topic: str,
+        question: str,
+        is_correct: bool,
+        document_id: int | None = None,
+    ) -> None:
         session = self.Session()
         try:
+            if not session.query(User).filter_by(id=int(user_id)).first():
+                raise EvidenceNotFound("User not found")
+            if (
+                document_id is not None
+                and not session.query(Document)
+                .filter_by(id=document_id, user_id=int(user_id))
+                .first()
+            ):
+                raise EvidenceNotFound("Document not found")
+            if type(is_correct) is not bool:
+                raise ValueError("is_correct must be validated before recording")
             attempt = QuizAttempt(
                 user_id=user_id,
+                document_id=document_id,
                 topic=topic,
                 question=question,
                 is_correct=int(is_correct),
@@ -36,7 +54,12 @@ class ProgressDB:
         try:
             attempts = session.query(QuizAttempt).filter_by(user_id=user_id).all()
             if not attempts:
-                return {"total_attempts": 0, "correct": 0, "accuracy": None, "topics": []}
+                return {
+                    "total_attempts": 0,
+                    "correct": 0,
+                    "accuracy": None,
+                    "topics": [],
+                }
 
             total = len(attempts)
             correct = sum(a.is_correct for a in attempts)
