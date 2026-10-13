@@ -16,6 +16,7 @@ RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin study \
     && mkdir -p /app/data /home/study/.cache/huggingface \
     && chown -R study:study /app/data /home/study
 COPY --chown=study:study . .
+RUN python -m pip install --no-deps ./backend
 USER study
 EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]

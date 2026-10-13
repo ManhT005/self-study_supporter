@@ -1,35 +1,18 @@
-from collections import defaultdict
+from typing import TYPE_CHECKING
 
-from src.rag.vector_store import VectorStore
-from src.rag.bm25_index import BM25Index
 from src.rag.schemas import Chunk
+from study_supporter.ai.retrieval.rrf import reciprocal_rank_fusion
 
-def reciprocal_rank_fusion(
-    dense_ranked_ids: list[str],
-    sparse_ranked_ids: list[str],
-    k: int = 60,
-) -> dict[str, float]:
-    """
-    Nhận 2 list id đã sort theo rank (index 0 = hạng 1),
-    trả về dict {chunk_id: rrf_score}.
-    """
-    # TODO: với mỗi list, lặp qua index (rank = index + 1),
-    # cộng dồn 1/(k + rank) vào scores[chunk_id]
-    scores = defaultdict(float)
-
-    for ranked_list in (dense_ranked_ids, sparse_ranked_ids):
-        for index, chunk_id in enumerate(ranked_list):
-            rank = index + 1
-            scores[chunk_id] += 1 / (k + rank)
-
-    return dict(scores)
+if TYPE_CHECKING:
+    from src.rag.vector_store import VectorStore
+    from src.rag.bm25_index import BM25Index
 
 
 def hybrid_search(
     query: str,
-    vector_store: VectorStore,
-    bm25_index: BM25Index,
-    embed_query_fn,     # hàm nhận query text -> vector
+    vector_store: "VectorStore",
+    bm25_index: "BM25Index",
+    embed_query_fn,  # hàm nhận query text -> vector
     top_k: int = 5,
 ) -> list[Chunk]:
     # TODO:
@@ -53,6 +36,8 @@ def hybrid_search(
     # 1. Dense Search
     # ==========================
 
+    if type(top_k) is not int or top_k < 1:
+        raise ValueError("top_k must be a positive integer")
     query_vector = embed_query_fn(query)
 
     dense_result = vector_store.documents.query(
@@ -71,10 +56,7 @@ def hybrid_search(
         top_k=top_k * 2,
     )
 
-    sparse_ids = [
-        chunk.chunk_id
-        for chunk, _ in sparse_result
-    ]
+    sparse_ids = [chunk.chunk_id for chunk, _ in sparse_result]
 
     # ==========================
     # 3. Reciprocal Rank Fusion
@@ -95,10 +77,7 @@ def hybrid_search(
         reverse=True,
     )
 
-    top_ids = [
-        chunk_id
-        for chunk_id, _ in ranked_ids[:top_k]
-    ]
+    top_ids = [chunk_id for chunk_id, _ in ranked_ids[:top_k]]
 
     # ==========================
     # 5. Map id -> Chunk
