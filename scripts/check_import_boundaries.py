@@ -11,6 +11,10 @@ DETERMINISTIC_IMPORTS = {
     "study_supporter.domain.documents": {"pydantic"},
     "study_supporter.domain.knowledge_graph": {"pydantic"},
     "study_supporter.ai.ingestion.chunking": {"numpy"},
+    "study_supporter.domain.assessment": {"pydantic"},
+    "study_supporter.ai.graph.algorithms": {"networkx"},
+    "study_supporter.ai.assessment.json_parsing": {"pydantic"},
+    "study_supporter.application.use_cases.llm_json": {"pydantic"},
 }
 ALLOWED = {
     "domain": {"domain"},
