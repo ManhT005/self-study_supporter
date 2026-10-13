@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-print("DEBUG - DATABASE_URL đang dùng:", os.getenv("DATABASE_URL"))
 
 import streamlit as st
 
