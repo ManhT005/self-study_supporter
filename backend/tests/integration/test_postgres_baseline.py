@@ -1,4 +1,4 @@
-"""Requires a disposable migrated PostgreSQL DB in P0_TEST_DATABASE_URL."""
+"""Requires a disposable migrated PostgreSQL DB in STUDY_TEST_DATABASE_URL."""
 
 import os
 import uuid
@@ -9,18 +9,18 @@ from alembic.migration import MigrationContext
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 
-from src.db.database import Base
-from src.db.models import User
-from src.documents import document_service as documents
-from src.memory.progress_db import ProgressDB
+from study_supporter.infrastructure.persistence.sqlalchemy.database import Base
+from study_supporter.infrastructure.persistence.sqlalchemy.models import User
+from study_supporter.infrastructure.persistence.sqlalchemy import document_repository as documents
+from study_supporter.infrastructure.persistence.sqlalchemy.progress_repository import ProgressDB
 from study_supporter.domain.errors import EvidenceNotFound
 
 
 @pytest.fixture
 def pg_repository(monkeypatch):
-    url = os.environ.get("P0_TEST_DATABASE_URL")
+    url = os.environ.get("STUDY_TEST_DATABASE_URL")
     if not url:
-        pytest.fail("Set P0_TEST_DATABASE_URL to a disposable migrated PostgreSQL database")
+        pytest.fail("Set STUDY_TEST_DATABASE_URL to a disposable migrated PostgreSQL database")
     engine = create_engine(url)
     assert engine.dialect.name == "postgresql"
     factory = sessionmaker(bind=engine)
@@ -69,5 +69,36 @@ def test_postgres_ownership_and_progress(pg_repository):
     with pytest.raises(EvidenceNotFound):
         progress.record_attempt(str(b), "fixture", "Q?", True, doc)
     progress.record_attempt(str(a), "fixture", "Q?", True, doc)
+    assert progress.get_summary(str(a))["total_attempts"] == 1
+    assert progress.get_summary(str(b))["total_attempts"] == 0
+
+
+def test_canonical_repository_and_grading_preserve_scoped_data(pg_repository):
+    from study_supporter.application.contracts.context import AppContext
+    from study_supporter.application.use_cases.learning import SubmitQuizUseCase
+    from study_supporter.infrastructure.persistence.sqlalchemy.repositories import (
+        DocumentRepository,
+    )
+
+    _, factory, (a, b) = pg_repository
+    repository = DocumentRepository(factory)
+    document = repository.create(str(a), "canonical.pdf", "fixture-hash")
+    repository.update(str(a), document["id"], status="ready", chunk_count=1)
+    repository.update(str(a), document["id"], concept_graph_json={"nodes": [], "edges": []})
+    assert repository.find_hash(str(a), "fixture-hash")["id"] == document["id"]
+    assert repository.find_hash(str(b), "fixture-hash") is None
+    with pytest.raises(EvidenceNotFound):
+        repository.get(str(b), document["id"])
+    question = {
+        "question": "Q?",
+        "options": ["a", "b", "c", "d"],
+        "correct_index": 1,
+        "explanation": "fixture",
+    }
+    progress = ProgressDB(factory)
+    submit = SubmitQuizUseCase(repository, progress)
+    with pytest.raises(EvidenceNotFound):
+        submit.execute(AppContext(str(b)), document["id"], question, 1)
+    assert submit.execute(AppContext(str(a)), document["id"], question, 1).is_correct
     assert progress.get_summary(str(a))["total_attempts"] == 1
     assert progress.get_summary(str(b))["total_attempts"] == 0

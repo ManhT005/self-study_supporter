@@ -2,7 +2,7 @@ name: quality
 
 on:
   push:
-    branches: [main, 'feature/**', 'fix/**', 'refactor/**', 'chore/**', 'ci/**']
+    branches: [main, develop, 'feature/**', 'fix/**', 'refactor/**', 'chore/**', 'ci/**']
   pull_request:
 
 permissions:
@@ -22,8 +22,8 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: requirements-dev.txt
-      - run: python -m pip install -r requirements-dev.txt
+          cache-dependency-path: requirements/dev.txt
+      - run: python -m pip install -r requirements/dev.txt
       - run: python -m pip install --no-build-isolation --no-deps -e ./backend
       - run: ruff check .
       - run: ruff format --check .
@@ -45,22 +45,22 @@ jobs:
         env:
           POSTGRES_USER: fixture
           POSTGRES_PASSWORD: fixture-test-only
-          POSTGRES_DB: p0_test
+          POSTGRES_DB: study_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U fixture -d p0_test"
+          --health-cmd "pg_isready -U fixture -d study_test"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      DATABASE_URL: postgresql+psycopg2://fixture:fixture-test-only@localhost:5432/p0_test
-      P0_TEST_DATABASE_URL: postgresql+psycopg2://fixture:fixture-test-only@localhost:5432/p0_test
+      DATABASE_URL: postgresql+psycopg2://fixture:fixture-test-only@localhost:5432/study_test
+      STUDY_TEST_DATABASE_URL: postgresql+psycopg2://fixture:fixture-test-only@localhost:5432/study_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: requirements-dev.txt
-      - run: python -m pip install -r requirements-dev.txt
+          cache-dependency-path: requirements/dev.txt
+      - run: python -m pip install -r requirements/dev.txt
       - run: python -m pip install --no-build-isolation --no-deps -e ./backend
       - run: python -m alembic -c backend/alembic.ini upgrade head
       - run: python -m alembic -c backend/alembic.ini check
@@ -81,7 +81,7 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Compose and functional smoke without models
         run: |
-          cp .env.docker.example .env.docker
+          cp config/docker.env.example .env.docker
           docker compose --env-file .env.docker config --quiet
           docker compose --env-file .env.docker up -d --no-build --wait
           curl --fail http://localhost:8501/_stcore/health
