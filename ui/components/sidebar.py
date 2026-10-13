@@ -1,3 +1,4 @@
+from ui.application_bridge import get_application_services
 import hashlib
 import streamlit as st
 import tempfile
@@ -5,10 +6,6 @@ import os
 import time
 import html
 
-import google.genai as genai
-
-from src.llm.openai_compatible_client import OpenAICompatibleClient
-from src.llm.multi_provider_llm import MultiProviderLLM
 
 from src.rag.pdf_parser import parse_pdf
 from src.rag.chunker import (
@@ -21,12 +18,9 @@ from src.rag.chunker import (
 from src.rag.embedder import embed_chunks
 from src.rag.vector_store import VectorStore
 from src.rag.bm25_index import BM25Index
-from src.rag.embedding_provider import LocalEmbeddingProvider
 from src.graph.graph_builder import build_concept_graph
 from src.graph.graph_algorithms import detect_cycles, suggest_learning_path
 
-from src.llm.gemini_client import GeminiClient
-from src.llm.ollama_client import OllamaClient
 from src.agent.orchestrator import ReActOrchestrator
 from src.agent.tools.search_docs import SearchDocsTool
 from src.agent.tools.generate_quiz import GenerateQuizTool
@@ -221,130 +215,15 @@ def _rebuild_orchestrator_with_new_llm():
 
 
 def _get_llm_client():
-    """Khởi tạo LLM theo lựa chọn của người dùng. Hỗ trợ 3 chế độ: auto / gemini / ollama."""
-    choice = st.session_state.model_choice
-
-    if choice == "ollama":
-        return OllamaClient(model="qwen2.5:1.5b")
-
-    if choice == "gemini":
-        return _build_gemini_client()
-
-    # choice == "auto" → build MultiProviderLLM
-    return _build_multi_provider_llm()
+    selection = get_application_services().provider(st.session_state.model_choice)
+    st.session_state.model_choice = selection.mode
+    if selection.notice:
+        st.info(selection.notice)
+    return selection.client
 
 
-def _build_gemini_client():
-    """Khởi tạo GeminiClient, fallback Ollama nếu thiếu key."""
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        st.warning("Không tìm thấy GEMINI_API_KEY trong .env, chuyển sang Ollama local.")
-        st.session_state.model_choice = "ollama"
-        return OllamaClient(model="qwen2.5:1.5b")
-    try:
-        gemini_client_raw = genai.Client(api_key=api_key)
-        return GeminiClient(gemini_client_raw, model="gemini-3-flash-preview")
-    except Exception as e:
-        st.warning(f"Không khởi tạo được Gemini ({e}), chuyển sang Ollama local.")
-        st.session_state.model_choice = "ollama"
-        return OllamaClient(model="qwen2.5:1.5b")
-
-
-def _build_multi_provider_llm():
-    """
-    Build MultiProviderLLM với tất cả provider có API key trong .env.
-    Thứ tự ưu tiên: Gemini → Groq → Cerebras → GitHub Models → OpenRouter → Ollama.
-    Ollama luôn nằm cuối danh sách làm lưới an toàn.
-    """
-    providers = []
-
-    # 1. Gemini (chất lượng cao nhất)
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if gemini_key:
-        try:
-            gemini_client_raw = genai.Client(api_key=gemini_key)
-            providers.append(GeminiClient(gemini_client_raw, model="gemini-3-flash-preview"))
-        except Exception as e:
-            print(f"⚠️ Bỏ qua Gemini (lỗi khởi tạo): {e}")
-
-    # 2. Groq (tốc độ nhanh, RPM khá)
-    groq_key = os.getenv("GROQ_API_KEY")
-    if groq_key:
-        providers.append(
-            OpenAICompatibleClient(
-                base_url="https://api.groq.com/openai/v1",
-                api_key=groq_key,
-                model="llama-3.3-70b-versatile",
-                provider_name="Groq",
-                max_calls=25,
-                period=60.0,
-            )
-        )
-
-    # 3. Cerebras (token/ngày lớn)
-    cerebras_key = os.getenv("CEREBRAS_API_KEY")
-    if cerebras_key:
-        providers.append(
-            OpenAICompatibleClient(
-                base_url="https://api.cerebras.ai/v1",
-                api_key=cerebras_key,
-                model="llama-3.3-70b",
-                provider_name="Cerebras",
-                max_calls=25,
-                period=60.0,
-            )
-        )
-
-    # 4. GitHub Models
-    github_token = os.getenv("GITHUB_TOKEN")
-    if github_token:
-        providers.append(
-            OpenAICompatibleClient(
-                base_url="https://models.inference.ai.azure.com",
-                api_key=github_token,
-                model="gpt-4o-mini",
-                provider_name="GitHub Models",
-                max_calls=10,
-                period=60.0,
-            )
-        )
-
-    # 5. OpenRouter (tổng hợp model mở)
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
-    if openrouter_key:
-        providers.append(
-            OpenAICompatibleClient(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=openrouter_key,
-                model="meta-llama/llama-3.3-70b-instruct:free",
-                provider_name="OpenRouter",
-                max_calls=15,
-                period=60.0,
-            )
-        )
-
-    # 6. Ollama cục bộ (luôn có, luôn cuối cùng)
-    providers.append(OllamaClient(model="qwen2.5:1.5b"))
-
-    if len(providers) == 1:
-        # Chỉ có Ollama — không cần MultiProviderLLM
-        st.info("Không tìm thấy API key nào, chỉ dùng Ollama cục bộ.")
-        return providers[0]
-
-    provider_names = [MultiProviderLLM._get_provider_name(p) for p in providers]
-    print(f"🔄 MultiProviderLLM khởi tạo với {len(providers)} providers: {provider_names}")
-    return MultiProviderLLM(providers)
-
-
-@st.cache_resource
-def _get_embedding_provider() -> LocalEmbeddingProvider:
-    """Singleton cached — model bge-m3 tải 1 lần duy nhất, giữ nguyên qua mọi session."""
-    try:
-        return LocalEmbeddingProvider()
-    except Exception as exc:
-        raise EmbeddingUnavailable(
-            "Không tải được model embedding. Kiểm tra cache và kết nối mạng."
-        ) from exc
+def _get_embedding_provider():
+    return get_application_services().embedding
 
 
 def _reset_for_new_document():

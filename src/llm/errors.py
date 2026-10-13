@@ -1,6 +1,6 @@
-class ProviderAuthenticationError(RuntimeError):
-    """Provider credential or authorization failure; do not hide with fallback."""
+"""Temporary compatibility alias; canonical implementation is installed."""
 
+import importlib
+import sys
 
-class ProviderUnavailable(RuntimeError):
-    """A transient provider failure, safe for fallback."""
+sys.modules[__name__] = importlib.import_module("study_supporter.domain.provider_errors")
