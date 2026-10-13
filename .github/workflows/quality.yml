@@ -48,7 +48,7 @@ jobs:
           POSTGRES_DB: p0_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd 'pg_isready -U fixture -d p0_test'
+          --health-cmd "pg_isready -U fixture -d p0_test"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       DATABASE_URL: postgresql+psycopg2://fixture:fixture-test-only@localhost:5432/p0_test
