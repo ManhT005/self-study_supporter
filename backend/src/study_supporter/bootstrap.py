@@ -105,3 +105,61 @@ class ApplicationFactory:
         from study_supporter.infrastructure.llm.factory import select_provider
 
         return select_provider(self.settings, mode)
+
+    def open_document(self, context, document_id=None, mode="auto"):
+        from study_supporter.application.contracts.context import AppContext
+        from study_supporter.application.use_cases.answer_question import AnswerQuestionUseCase
+        from study_supporter.application.use_cases.learning import (
+            SubmitQuizUseCase,
+            GetProgressUseCase,
+            SaveNoteUseCase,
+        )
+        from study_supporter.application.use_cases.session import LearningSession
+        from study_supporter.infrastructure.persistence.chroma.note_repository import LongTermMemory
+        from study_supporter.orchestration.legacy_react.orchestrator import ReActOrchestrator
+        from study_supporter.orchestration.legacy_react.tools.retrieve_evidence import (
+            RetrieveEvidenceTool,
+        )
+        from study_supporter.orchestration.legacy_react.tools.generate_quiz import GenerateQuizTool
+        from study_supporter.orchestration.legacy_react.tools.save_note import SaveNoteTool
+        from study_supporter.orchestration.legacy_react.tools.get_progress import GetProgressTool
+
+        document = (
+            self.document_repository.get(context.user_id, document_id)
+            if document_id is not None
+            else self.document_repository.latest(context.user_id)
+        )
+        if not document:
+            return None
+        store = self.vector_store(document)
+        chunks = store.load_all_chunks()
+        if not chunks:
+            return None
+        context = AppContext(context.user_id, (str(document["id"]),))
+        selection = self.provider(mode)
+        search = RetrieveEvidenceTool(self.retriever(), context)
+        generator = GenerateQuizTool(selection.client)
+        notes = SaveNoteUseCase(
+            LongTermMemory(store, lambda query: self.embedding.embed([query], "RETRIEVAL_QUERY")[0])
+        )
+        progress = GetProgressUseCase(self.progress_repository)
+        tools = [
+            search,
+            generator,
+            SaveNoteTool(notes, context.user_id),
+            GetProgressTool(progress, context.user_id),
+        ]
+        runner = ReActOrchestrator(selection.client, tools)
+        return LearningSession(
+            context,
+            document,
+            chunks,
+            AnswerQuestionUseCase(runner, search),
+            generator,
+            SubmitQuizUseCase(self.document_repository, self.progress_repository),
+            progress,
+            self.document_repository,
+            selection.client,
+            mode=selection.mode,
+            notice=selection.notice,
+        )

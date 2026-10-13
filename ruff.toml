@@ -1,6 +1,7 @@
 target-version = "py311"
 line-length = 100
 include = [
+  "apps/**/*.py",
   "backend/src/**/*.py", "backend/tests/**/*.py", "backend/migrations/**/*.py",
   "scripts/check_import_boundaries.py", "scripts/docker_backup.py", "scripts/docker_smoke.py",
   "src/auth/*.py", "src/documents/*.py", "src/db/database.py", "src/db/lifecycle.py",
@@ -23,3 +24,4 @@ select = ["E4", "E7", "E9", "F"]
 [lint.per-file-ignores]
 # Load local dotenv before importing legacy adapters. Remove with explicit bootstrap in P1.
 "main.py" = ["E402"]
+"apps/streamlit_legacy/main.py" = ["E402"]

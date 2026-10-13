@@ -1,15 +1,9 @@
+from study_supporter.domain.auth import AuthError
 import bcrypt
 from sqlalchemy.exc import IntegrityError
 
 from study_supporter.infrastructure.persistence.sqlalchemy.database import SessionLocal
 from study_supporter.infrastructure.persistence.sqlalchemy.models import User
-
-
-class AuthError(Exception):
-    """Lỗi nghiệp vụ xác thực (username trùng, mật khẩu quá ngắn...) — hiển thị
-    trực tiếp cho người dùng, khác với lỗi hệ thống (kết nối DB thất bại...)."""
-
-    pass
 
 
 def register_user(username: str, password: str, *, session_factory=None) -> int:
