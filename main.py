@@ -1,10 +1,16 @@
-import os
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
 import streamlit as st
+from src.db.lifecycle import verify_schema
+
+try:
+    verify_schema()
+except Exception:
+    st.error("Database chưa sẵn sàng. Chạy migration Alembic theo hướng dẫn trước khi mở ứng dụng.")
+    st.stop()
 
 from ui.components.sidebar import render_sidebar
 from ui.components.auth import render_login_page, render_logout_button
@@ -251,8 +257,8 @@ with hero_col1:
     )
 with hero_col2:
     st.markdown(
-        f"<div style='text-align:right; margin-top:0.4rem;'><span style='font-size: 0.95rem; color: #64748b;'>👤 <strong>{st.session_state.get('username', '')}</strong></span></div>", 
-        unsafe_allow_html=True
+        f"<div style='text-align:right; margin-top:0.4rem;'><span style='font-size: 0.95rem; color: #64748b;'>👤 <strong>{st.session_state.get('username', '')}</strong></span></div>",
+        unsafe_allow_html=True,
     )
 with hero_col3:
     button_label = "🌙 Dark" if st.session_state.theme_mode == "light" else "☀️ Light"
@@ -263,14 +269,20 @@ with hero_col3:
 st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
 with st.sidebar:
-    if st.button("Show sidebar" if st.session_state.collapsed_sidebar else "Hide sidebar", use_container_width=True):
+    if st.button(
+        "Show sidebar" if st.session_state.collapsed_sidebar else "Hide sidebar",
+        use_container_width=True,
+    ):
         st.session_state.collapsed_sidebar = not st.session_state.collapsed_sidebar
         st.rerun()
 
     if not st.session_state.collapsed_sidebar:
         render_sidebar()
     else:
-        st.markdown("<div class='card'><strong>Workspace</strong><br>Upload a document to unlock the assistant.</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='card'><strong>Workspace</strong><br>Upload a document to unlock the assistant.</div>",
+            unsafe_allow_html=True,
+        )
         if st.button("Open workspace", use_container_width=True):
             st.session_state.collapsed_sidebar = False
             st.rerun()

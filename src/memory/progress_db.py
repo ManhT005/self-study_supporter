@@ -1,9 +1,6 @@
-from src.db.database import Base, engine, SessionLocal
+from src.db.database import SessionLocal
 from src.db.models import QuizAttempt, Document, User
 from study_supporter.domain.errors import EvidenceNotFound
-
-# Đảm bảo bảng tồn tại (users + quiz_attempts) — idempotent, gọi nhiều lần vô hại
-Base.metadata.create_all(engine)
 
 
 class ProgressDB:

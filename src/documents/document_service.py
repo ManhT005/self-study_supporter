@@ -1,8 +1,6 @@
-from src.db.database import SessionLocal, Base, engine
+from src.db.database import SessionLocal
 from src.db.models import Document
 from study_supporter.domain.errors import EvidenceNotFound
-
-Base.metadata.create_all(engine)
 
 
 def create_document(user_id: int, filename: str) -> tuple[int, str]:
@@ -62,9 +60,7 @@ def update_document_status(
         session.close()
 
 
-def update_document_graph(
-    document_id: int, graph_json: dict | None, *, user_id: int
-) -> None:
+def update_document_graph(document_id: int, graph_json: dict | None, *, user_id: int) -> None:
     session = SessionLocal()
     try:
         doc = session.query(Document).filter_by(id=document_id, user_id=user_id).first()
