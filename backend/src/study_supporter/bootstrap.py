@@ -79,6 +79,14 @@ class ApplicationFactory:
 
         return VectorStore(self.settings.chroma_path, document["chroma_collection_name"])
 
+    def retriever(self):
+        from study_supporter.infrastructure.retrieval.scoped_retriever import ScopedHybridRetriever
+
+        return RetrieveEvidenceUseCase(
+            self.document_repository,
+            ScopedHybridRetriever(self.document_repository, self.vector_store, self.embedding),
+        )
+
     def verify_schema(self):
         from study_supporter.infrastructure.persistence.sqlalchemy.lifecycle import verify_schema
 
