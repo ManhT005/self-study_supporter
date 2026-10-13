@@ -56,6 +56,24 @@ not part of the snapshot. Restoring old data is never an automatic schema stamp.
 ## Dependency locks
 
 `requirements.in` pins direct runtime dependencies; `requirements.txt` locks the
-Linux/Python 3.11 CPU deployment. `requirements-dev.txt` locks offline test tooling.
+Linux x86_64/Python 3.11 CPU deployment. `requirements-dev.txt` locks offline test tooling.
 Regenerate with uv 0.13.0, review the diff, then clean-build before committing.
 The existing `.env`, uploaded data and secrets are excluded by `.dockerignore`.
+
+## Executable smoke commands
+
+Only use synthetic smoke seeding on a disposable dev stack. It adds fixture accounts,
+documents and quiz records; the marker refuses accidental repeated seeding.
+
+```powershell
+docker compose --env-file .env.docker exec -T app python -m scripts.docker_smoke seed
+docker compose --env-file .env.docker exec -T app python -m scripts.docker_smoke verify
+docker compose --env-file .env.docker exec -T app python -m scripts.streamlit_smoke
+# Optional: downloads BGE-M3 and calls host/container Ollama qwen3:1.7b.
+docker compose --env-file .env.docker exec -T app python -m scripts.model_smoke
+```
+
+The first suite uses fake 1024D embeddings and a mocked LLM. AppTest executes
+Streamlit registration/logout/login. Model smoke uses BGE-M3 and real Ollama in
+dedicated fixture accounts. None substitutes for a human browser E2E check or a
+retrieval quality benchmark. Results are in [acceptance evidence](../reports/p0-acceptance.md).

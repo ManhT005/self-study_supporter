@@ -1,5 +1,8 @@
 # SELF STUDY SUPPORTER — PHASE 0: ENGINEERING FOUNDATION & CORE ISOLATION PREPARATION
 
+> **Theo dõi triển khai:** Đây là bản kế hoạch gốc được lưu làm baseline. Các commit,
+> kiểm thử đã chạy và phần nghiệm thu còn thiếu nằm trong [báo cáo Phase 0](../reports/p0-acceptance.md).
+
 > **Vai trò:** AI Lead / Senior AI Engineer / Tech Lead  
 > **Trạng thái:** Implementation-ready plan — **chưa triển khai các task trong tài liệu**  
 > **Ngày lập:** 2026-10-13  
