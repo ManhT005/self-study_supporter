@@ -26,7 +26,8 @@ Local commits/checkpoints are a dependency stack based on develop:
 | Learning services | 45b971c | refactor/learning-services |
 | ReAct/Streamlit boundary | f478856 | refactor/agent-ui-boundary |
 | Requirements/env cleanup | 0d79829 | refactor/legacy-cleanup |
-| Namespace removal, QA and docs | final cleanup commit | refactor/legacy-cleanup |
+| Namespace removal, QA and docs | f453d90 | refactor/legacy-cleanup |
+| Citation rerun fix | final follow-up commit (HEAD) | refactor/legacy-cleanup |
 
 Submit/rebase the slices in plan order after review. No push, remote PR, merge or
 release tag is part of this local execution.
@@ -34,22 +35,26 @@ release tag is part of this local execution.
 | Verification | Evidence |
 | --- | --- |
 | Original baseline | 91 offline tests on Windows |
-| Final offline suite | 121 tests; all old tests retained and collected in backend/tests |
-| Windows | Python 3.12.7: 121 passed, 11.04 seconds |
-| Linux | Python 3.11 in Linux Docker: 121 passed, 23.57 seconds |
+| Final offline suite | 122 tests; all old tests retained and collected in backend/tests |
+| Windows | Python 3.12.7: 122 passed, 11.68 seconds |
+| Linux | Python 3.11 in Linux Docker: 122 passed, 25.74 seconds |
 | Architecture/lint/format | Import gate, caller/presentation boundaries, Ruff check/format passed |
 | Package | Wheel/sdist built; wheel imported outside repository with src/ui unavailable |
+| Clean local clone | Editable install, 122 tests (24.15 seconds), Ruff/import gates and fresh wheel/sdist build passed without env/secrets or root src/ui |
 | PostgreSQL 16 fresh schema | Alembic upgrade/check, no drift, 3 integration tests passed |
 | Docker and Streamlit | Final image healthy; AppTest registration/logout/B login, fake services seed/verify and absence of src/ui namespaces passed |
 | Historical SQL/Chroma data | Baseline SQL/Chroma snapshot restored into consolidation-restore-20261014; canonical auth/chat/citations/quiz/progress/notes and A/B isolation verification passed |
 | Real model smoke | BGE-M3/1024D and Ollama qwen3:1.7b: canonical ingestion/retrieval/ReAct/evidence/quiz/persisted progress passed |
-| Real browser automation | Final Chromium flow pending |
+| Real browser automation | Playwright 1.63.0/Chromium passed registration/upload/chat/citations/quiz/grade/logout/B isolation/A resume with both deterministic providers and real BGE-M3/Ollama qwen3:1.7b |
 | Remote CI and human acceptance | Pending publication/review by maintainer |
 
 Fresh synthetic SQL/Chroma seed was verified again after Compose down/up without
 removing volumes. The backup baseline is retained locally under
 `data/backups/consolidation-baseline-20261014`; restored/smoke project volumes are
 also retained, and disposable containers are stopped after checks.
+Browser evidence/screenshots are retained locally in `data/browser-consolidation`;
+the model override ran only in a disposable test container. The primary app retains
+its original provider configuration and is restored on localhost:8501.
 
 Preserved data contracts: Alembic `p0_0001`, SQL tables/columns, string
 `QuizAttempt.user_id`, Chroma `documents_<id>` and `user_memory`, BGE-M3/1024D,
@@ -63,3 +68,10 @@ OCR; generated quiz sets/history are session-scoped while attempts and graphs
 persist in SQL; model smoke uses synthetic accounts and is not a quality benchmark. Human
 browser review, Tech Lead/Test Lead sign-off and final remote CI are still required
 before claiming the plan's overall merge acceptance.
+
+Browser checks exposed a pre-existing presentation bug: evidence chips were drawn
+only for the live answer and disappeared immediately after Streamlit rerun.
+The follow-up fix keeps Evidence DTOs with each assistant history item and renders
+them on subsequent runs; AppTest reproduces the rerun path. This is an intentional
+bug fix to citation visibility, with no retrieval/model/schema change. Earlier
+browser citation failures alone did not establish that the model skipped retrieval.
