@@ -11,6 +11,7 @@ from src.rag.chunker import (
 from src.rag.pdf_parser import parse_pdf
 from src.rag.schemas import DocumentPage
 from study_supporter.domain.errors import DocumentUnsupported
+from study_supporter.domain.errors import EmbeddingUnavailable
 
 
 @pytest.mark.parametrize(
@@ -68,3 +69,16 @@ def test_two_page_pdf_provenance(tmp_path):
 def test_invalid_upload(name, mime, content):
     with pytest.raises(DocumentUnsupported):
         validate_pdf_upload(name, mime, content)
+
+
+def test_incomplete_embeddings_fail_closed():
+    from unittest.mock import Mock
+    from src.rag.chunker import embed_sentences
+
+    sentences = flatten_pages_to_sentences(
+        [DocumentPage(source="fixture.pdf", page_number=1, text="First sentence. Second sentence.")]
+    )
+    provider = Mock()
+    provider.embed.return_value = [[1.0, 0.0]]
+    with pytest.raises(EmbeddingUnavailable):
+        embed_sentences(sentences, provider)

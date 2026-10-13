@@ -67,9 +67,7 @@ cloudpickle==3.1.2
 cryptography==50.0.2
     # via google-auth
 distro==1.9.0
-    # via
-    #   google-genai
-    #   posthog
+    # via google-genai
 durationpy==0.11
     # via kubernetes
 fastapi==0.143.0
@@ -157,6 +155,8 @@ mdurl==0.1.2
     # via markdown-it-py
 mmh3==5.3.1
     # via chromadb
+monotonic==1.6
+    # via posthog
 mpmath==1.3.0
     # via sympy
 multidict==7.1.0
@@ -250,8 +250,10 @@ pillow==11.3.0
     # via
     #   sentence-transformers
     #   streamlit
-posthog==7.68.0
-    # via chromadb
+posthog==3.7.0
+    # via
+    #   -r requirements.in
+    #   chromadb
 propcache==0.5.4
     # via
     #   aiohttp
@@ -294,6 +296,7 @@ python-dateutil==2.9.0.post0
     # via
     #   kubernetes
     #   pandas
+    #   posthog
 python-dotenv==1.0.1
     # via
     #   -r requirements.in
@@ -352,6 +355,7 @@ shellingham==1.5.4
 six==1.17.0
     # via
     #   kubernetes
+    #   posthog
     #   python-dateutil
 smmap==5.0.3
     # via gitdb
@@ -414,7 +418,6 @@ typing-extensions==4.16.0
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-    #   posthog
     #   pydantic
     #   pydantic-core
     #   referencing

@@ -6,6 +6,7 @@ from collections import deque
 
 class RateLimiter:
     """Đảm bảo không gửi quá `max_calls` request trong `period` giây gần nhất."""
+
     def __init__(self, max_calls: int = 90, period: float = 60.0):
         self.max_calls = max_calls
         self.period = period
@@ -47,6 +48,7 @@ def _get_quota_period(e) -> str:
         pass
     return "unknown"
 
+
 class EmbeddingProvider(ABC):
     """Interface chung — mọi nơi trong pipeline chỉ nói chuyện qua interface này."""
 
@@ -63,6 +65,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
     def __init__(self, client, batch_size: int = 20, max_retries: int = 5):
         from google.genai.types import EmbedContentConfig
         from google.genai.errors import ClientError
+
         self.client = client
         self.batch_size = batch_size
         self.max_retries = max_retries
@@ -73,7 +76,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
     def embed(self, texts: list[str], task_type: str) -> list[list[float]]:
         all_embeddings = []
         for i in range(0, len(texts), self.batch_size):
-            batch = texts[i:i + self.batch_size]
+            batch = texts[i : i + self.batch_size]
             for attempt in range(self.max_retries):
                 self.rate_limiter.wait_if_needed()
                 try:
@@ -87,7 +90,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
                     all_embeddings.extend([e.values for e in result.embeddings])
                     break
                 except self._ClientError as e:
-                    if getattr(e, "status_code", None) != 429:
+                    if getattr(e, "code", getattr(e, "status_code", None)) != 429:
                         raise
                     period = _get_quota_period(e)
                     if period == "day":
@@ -97,7 +100,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
                         ) from e
                     if attempt < self.max_retries - 1:
                         wait = _extract_retry_delay(e)
-                        print(f"429 (batch {i//self.batch_size}), đợi {wait:.1f}s...")
+                        print(f"429 (batch {i // self.batch_size}), đợi {wait:.1f}s...")
                         time.sleep(wait)
                     else:
                         raise
@@ -109,6 +112,7 @@ class LocalEmbeddingProvider(EmbeddingProvider):
 
     def __init__(self, model_name: str = "BAAI/bge-m3", batch_size: int = 64):
         from sentence_transformers import SentenceTransformer
+
         self.model = SentenceTransformer(model_name)
         self.batch_size = batch_size
 

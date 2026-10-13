@@ -3,6 +3,8 @@ google-genai==1.56.0
 python-dotenv==1.0.1
 pymupdf==1.25.1
 chromadb==0.5.23
+# Chroma 0.5 calls the legacy three-argument capture API.
+posthog==3.7.0
 rank-bm25==0.2.2
 pydantic==2.10.4
 sentence-transformers==3.3.1

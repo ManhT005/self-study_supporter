@@ -6,6 +6,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.rag.schemas import Chunk, DocumentPage, SentenceUnit
 from src.rag.embedding_provider import EmbeddingProvider
+from study_supporter.domain.errors import EmbeddingUnavailable
 
 
 # Ý tưởng thuật toán: Semantic Chunking bằng Breakpoint Detection
@@ -69,14 +70,14 @@ def _embed_sentence_batch(
     """Embed một batch câu và gán vector vào từng SentenceUnit."""
     texts = [s.text for s in batch]
     vectors = provider.embed(texts, task_type="SEMANTIC_SIMILARITY")
+    if len(vectors) != len(batch) or any(not vector for vector in vectors):
+        raise EmbeddingUnavailable("Embedding provider returned incomplete vectors")
     for s, v in zip(batch, vectors):
         s.embedding = v
     return batch
 
 
-def _split_into_batches(
-    sentences: list[SentenceUnit], batch_size: int
-) -> list[list[SentenceUnit]]:
+def _split_into_batches(sentences: list[SentenceUnit], batch_size: int) -> list[list[SentenceUnit]]:
     """Chia sentences thành các batch có kích thước cố định, hiệu quả hơn chia theo page."""
     return [sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)]
 

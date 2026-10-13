@@ -1,3 +1,5 @@
+import html
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -256,8 +258,9 @@ with hero_col1:
         unsafe_allow_html=True,
     )
 with hero_col2:
+    display_username = html.escape(st.session_state.get("username", ""))
     st.markdown(
-        f"<div style='text-align:right; margin-top:0.4rem;'><span style='font-size: 0.95rem; color: #64748b;'>👤 <strong>{st.session_state.get('username', '')}</strong></span></div>",
+        f"<div style='text-align:right; margin-top:0.4rem;'><span style='font-size: 0.95rem; color: #64748b;'>👤 <strong>{display_username}</strong></span></div>",
         unsafe_allow_html=True,
     )
 with hero_col3:

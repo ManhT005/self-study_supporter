@@ -4,9 +4,7 @@ from src.rag.schemas import Chunk
 
 
 class VectorStore:
-    def __init__(
-        self, persist_path: str = "data/chroma_db", collection_name: str = "documents"
-    ):
+    def __init__(self, persist_path: str = "data/chroma_db", collection_name: str = "documents"):
         """
         collection_name: do caller quyết định (ví dụ f"documents_{document_id}")
         — mỗi tài liệu 1 collection riêng, cách ly hoàn toàn giữa các tài liệu/user,
@@ -17,15 +15,20 @@ class VectorStore:
         thật (self-host, có persistent volume) thay vì lưu file cục bộ.
         """
         import chromadb
+        from chromadb.config import Settings
 
         self.persist_path = persist_path
 
         chroma_host = os.getenv("CHROMA_SERVER_HOST")
         if chroma_host:
             chroma_port = int(os.getenv("CHROMA_SERVER_PORT", "8000"))
-            self.client = chromadb.HttpClient(host=chroma_host, port=chroma_port)
+            self.client = chromadb.HttpClient(
+                host=chroma_host, port=chroma_port, settings=Settings(anonymized_telemetry=False)
+            )
         else:
-            self.client = chromadb.PersistentClient(path=persist_path)
+            self.client = chromadb.PersistentClient(
+                path=persist_path, settings=Settings(anonymized_telemetry=False)
+            )
 
         self.documents = self.client.get_or_create_collection(collection_name)
         self.user_memory = self.client.get_or_create_collection("user_memory")
@@ -57,9 +60,7 @@ class VectorStore:
     def load_all_chunks(self) -> list[Chunk]:
         data = self.documents.get(include=["documents", "metadatas"])
         chunks = []
-        for chunk_id, text, meta in zip(
-            data["ids"], data["documents"], data["metadatas"]
-        ):
+        for chunk_id, text, meta in zip(data["ids"], data["documents"], data["metadatas"]):
             chunks.append(
                 Chunk(
                     chunk_id=chunk_id,
