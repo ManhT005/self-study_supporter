@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools==75.6.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "study-supporter"
+version = "0.0.0"
+description = "Framework-independent core of Self Study Supporter"
+requires-python = ">=3.11,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.4", "ruff==0.9.10", "build==1.2.2.post1"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/contract"]

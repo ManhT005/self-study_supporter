@@ -1,16 +1,14 @@
 import bcrypt
 from sqlalchemy.exc import IntegrityError
 
-from src.db.database import SessionLocal, Base, engine
+from src.db.database import SessionLocal
 from src.db.models import User
-
-# Đảm bảo bảng users/quiz_attempts tồn tại — gọi 1 lần khi module được import
-Base.metadata.create_all(engine)
 
 
 class AuthError(Exception):
     """Lỗi nghiệp vụ xác thực (username trùng, mật khẩu quá ngắn...) — hiển thị
     trực tiếp cho người dùng, khác với lỗi hệ thống (kết nối DB thất bại...)."""
+
     pass
 
 

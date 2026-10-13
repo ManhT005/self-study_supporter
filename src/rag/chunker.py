@@ -6,6 +6,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.rag.schemas import Chunk, DocumentPage, SentenceUnit
 from src.rag.embedding_provider import EmbeddingProvider
+from study_supporter.domain.errors import EmbeddingUnavailable
 
 
 # Ý tưởng thuật toán: Semantic Chunking bằng Breakpoint Detection
@@ -14,7 +15,7 @@ from src.rag.embedding_provider import EmbeddingProvider
 # 1. Tách toàn bộ tài liệu thành từng câu.
 # 2. Embed từng câu riêng lẻ.
 # 3. Tính độ khác biệt (cosine distance) giữa embedding của câu liền kề nhau.
-# 4. Chỗ nào độ khác biệt đột ngột tăng cao (câu sau nói chuyện khác hẳn câu trước) 
+# 4. Chỗ nào độ khác biệt đột ngột tăng cao (câu sau nói chuyện khác hẳn câu trước)
 # → đó là breakpoint, tức ranh giới tự nhiên giữa 2 ý/2 đoạn.
 
 # 5. Gộp các câu nằm giữa 2 breakpoint liên tiếp thành 1 chunk.
@@ -45,7 +46,7 @@ def split_into_sentences(text: str) -> list[str]:
     Tách text thành list câu bằng regex: cắt sau . ! ?
     theo sau bởi khoảng trắng + chữ hoa/chữ có dấu (tránh cắt nhầm 'Fig. 2', 'e.g.').
     """
-    pattern = r'(?<=[.!?])\s+(?=[A-ZÀ-Ỹ])'
+    pattern = r"(?<=[.!?])\s+(?=[A-ZÀ-Ỹ])"
     raw_sentences = re.split(pattern, text)
 
     sentences = [s.strip() for s in raw_sentences if len(s.strip()) >= 3]
@@ -63,10 +64,14 @@ def flatten_pages_to_sentences(pages: list[DocumentPage]) -> list[SentenceUnit]:
 
 
 # embed_sentences trong chunker.py
-def _embed_sentence_batch(batch: list[SentenceUnit], provider: EmbeddingProvider) -> list[SentenceUnit]:
+def _embed_sentence_batch(
+    batch: list[SentenceUnit], provider: EmbeddingProvider
+) -> list[SentenceUnit]:
     """Embed một batch câu và gán vector vào từng SentenceUnit."""
     texts = [s.text for s in batch]
     vectors = provider.embed(texts, task_type="SEMANTIC_SIMILARITY")
+    if len(vectors) != len(batch) or any(not vector for vector in vectors):
+        raise EmbeddingUnavailable("Embedding provider returned incomplete vectors")
     for s, v in zip(batch, vectors):
         s.embedding = v
     return batch
@@ -74,7 +79,7 @@ def _embed_sentence_batch(batch: list[SentenceUnit], provider: EmbeddingProvider
 
 def _split_into_batches(sentences: list[SentenceUnit], batch_size: int) -> list[list[SentenceUnit]]:
     """Chia sentences thành các batch có kích thước cố định, hiệu quả hơn chia theo page."""
-    return [sentences[i:i + batch_size] for i in range(0, len(sentences), batch_size)]
+    return [sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)]
 
 
 def embed_sentences(
@@ -161,6 +166,8 @@ def compute_breakpoints(
     Trả về tập chỉ số i mà tại đó distance[i] (giữa câu i và i+1)
     vượt ngưỡng percentile của toàn bộ tài liệu -> đó là breakpoint.
     """
+    if not distances:
+        return set()
     threshold = np.percentile(distances, percentile)
     breakpoints = set()
     for i, d in enumerate(distances):

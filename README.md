@@ -1,117 +1,60 @@
-# 🎓 AI Study Agent
+# Self Study Supporter
 
-> **AI Study Agent** là một hệ thống hỗ trợ học tập cá nhân hóa thế hệ mới. Khác biệt với các Chatbot RAG truyền thống vốn thụ động, hệ thống này đóng vai trò như một **Agent tự chủ (Autonomous Agent)**: tự phân tích tài liệu, kiến tạo bản đồ tri thức, chủ động tra cứu thông tin (Tool Calling / ReAct), và thiết kế bài tập kiểm tra cá nhân hóa dựa trên điểm yếu của người học.
+Ứng dụng hỗ trợ tự học từ PDF, hiện dùng Streamlit, PostgreSQL/SQLite và Chroma.
+Nhánh `feature/docker-local-foundation` xây dựng nền tảng kỹ thuật Phase 0.
 
----
+Đã triển khai: đăng ký/đăng nhập; PDF có text layer; semantic chunking với BGE-M3;
+hybrid retrieval Dense + BM25 + RRF; custom ReAct với công cụ tìm tài liệu, quiz,
+ghi chú và tiến độ; concept graph/lộ trình học; quiz lưu SQL; persistent Chroma.
+Quiz chỉ được chấm khi có đúng bốn lựa chọn và một đáp án hợp lệ. PDF scan cần OCR.
 
-## ✨ Tính năng nổi bật
+Next.js, FastAPI, LangGraph, reranker và cá nhân hóa mastery thuộc roadmap, chưa
+triển khai trong Phase 0. Chưa phát hành v1.0.0; chưa có benchmark chất lượng LLM.
 
-- **📄 Document Processing & Hybrid RAG:**
-  - Hỗ trợ phân tích đa dạng tài liệu học tập (PDF, DOCX) với **PyMuPDF**.
-  - **Semantic Chunking:** Cắt đoạn thông minh dựa trên ngữ nghĩa (cosine similarity của các câu).
-  - **Hybrid Search (RRF):** Kết hợp tìm kiếm vector (Dense - ChromaDB) và từ khóa (Sparse - BM25) giúp truy xuất chính xác cả khái niệm rộng lẫn mã môn học, thuật ngữ đặc thù.
+## Chạy bằng Docker (PowerShell)
 
-- **🕸️ Knowledge Graph & Learning Path:**
-  - Tự động rút trích các **Concept (khái niệm)** và **Prerequisite (quan hệ tiên quyết)** từ tài liệu bằng LLM.
-  - Sử dụng **NetworkX** để xây dựng đồ thị có hướng (DiGraph) và **Topological Sort** để đề xuất lộ trình học tuyến tính tối ưu.
-  - Phát hiện chu trình (Cycle Detection) để cảnh báo logic sai lệch.
-
-- **🧠 ReAct Agent & Tool Calling:**
-  - Áp dụng kiến trúc **ReAct (Reasoning + Acting)** cho phép Agent tự suy luận và chọn công cụ phù hợp.
-  - **Tools:** `search_docs` (tra cứu tài liệu), `generate_quiz` (tạo câu hỏi), `save_note` (lưu chú thích), `get_progress` (truy xuất tiến độ học tập).
-  - Tích hợp **Memory 2 tầng** (Short-term context + Long-term ChromaDB user memory).
-
-- **🎯 Quiz Arena & Cá nhân hóa:**
-  - Tự động sinh bộ câu hỏi trắc nghiệm **theo từng Topic cụ thể** trong Concept Graph.
-  - Theo dõi tiến trình (Progress Bar), chấm điểm ngay lập tức, lưu trữ % hoàn thành vào Database (SQLite + SQLAlchemy).
-
-- **⚡ LLM Adapters:**
-  - Tích hợp linh hoạt giữa **Gemini API** (Free Tier - tốc độ cao) và **Ollama local** (Qwen2.5 - hoàn toàn offline, private, fallback khi hết quota).
-
----
-
-## 🛠️ Tech Stack (Định hướng Công nghệ)
-
-- **UI & Workspace:** Streamlit (Functional UI 3 cột: Sidebar - Graph/Chat - Quiz)
-- **Agent Orchestration:** Pure Python (No-Framework để tối ưu kiểm soát ReAct loop)
-- **Validation Layer:** Pydantic V2 (Structured Outputs)
-- **Embedding:** Gemini Embedding API (`text-embedding-004`) / `sentence-transformers` (`bge-m3`)
-- **Vector Database:** ChromaDB + `rank-bm25`
-- **Relational Database:** SQLite (ORM: SQLAlchemy)
-- **Graph Processing:** NetworkX
-
----
-
-## 🚀 Hướng dẫn cài đặt & Chạy ứng dụng
-
-### 1. Yêu cầu hệ thống
-- Python 3.10+
-- Ollama (nếu muốn sử dụng local models như `qwen2.5:1.5b` làm fallback)
-
-### 2. Cài đặt Dependencies
-
-Clone repository và cài đặt các thư viện cần thiết:
-
-```bash
-git clone https://github.com/yourusername/ai-study-agent.git
-cd ai-study-agent
-pip install -r requirements.txt
+```powershell
+git clone https://github.com/ManhT005/self-study_supporter.git
+cd self-study_supporter
+git switch feature/docker-local-foundation
+Copy-Item .env.docker.example .env.docker
+# Đổi POSTGRES_PASSWORD. Có thể để trống các key cloud.
+docker compose --env-file .env.docker config --quiet
+docker compose --env-file .env.docker up -d --build --wait
 ```
 
-### 3. Cấu hình môi trường
+Mở http://localhost:8501. Docker dùng Python 3.11/CPU và chạy migration trước app.
+App khỏe không đồng nghĩa model đã sẵn sàng. BGE-M3 tải vào `hf_cache` khi ingest;
+chat/quiz cần Ollama đã có model hoặc provider được cấu hình. Không tải model khi build.
+Đọc [Docker/Ollama/backup](docs/operations/docker.md) trước khi thao tác dữ liệu.
+POSIX dùng `cp` thay `Copy-Item`; các lệnh Compose giống nhau.
 
-Tạo file `.env` từ `.env.example`:
+## Kiểm thử và phát triển
 
-```bash
-cp .env.example .env
+Python 3.11–3.12; dùng môi trường riêng. Bộ test nhanh không gọi model hoặc cloud.
+
+```powershell
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements-dev.txt
+.venv/Scripts/python -m pip install --no-build-isolation --no-deps -e ./backend
+.venv/Scripts/python -m pytest -q
+.venv/Scripts/ruff check .
+.venv/Scripts/ruff format --check .
+.venv/Scripts/python scripts/check_import_boundaries.py
 ```
 
-Mở file `.env` và điền API key của bạn:
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
+`backend/` là distribution `study-supporter` theo src-layout, không có runtime
+framework dependency. Legacy `src/` và `ui/` được giữ lại; RRF forward sang package
+mới và có golden tests. Không đổi thuật toán, model, vector dimension hoặc ID collection.
+Các nhóm import được kiểm tra bằng AST; core không import UI, driver hoặc SDK.
 
-### 4. Khởi chạy Ứng dụng
+- [Hướng dẫn đóng góp và command matrix](CONTRIBUTING.md)
+- [Kiến trúc và ADR](docs/architecture/overview.md)
+- [Kế hoạch Phase 0](docs/plans/PHASE_0_ENGINEERING_FOUNDATION.md)
+- [Migration DB trống và adoption DB cũ](docs/operations/migrations.md)
+- [Contract cho frontend tương lai](docs/api/README.md)
+- [Kết quả nghiệm thu thực tế và phần còn thiếu](docs/reports/p0-acceptance.md)
 
-Chạy hệ thống với Streamlit:
-
-```bash
-streamlit run main.py
-```
-Giao diện Workspace sẽ tự động mở trên trình duyệt tại `http://localhost:8501`.
-
----
-
-## 📁 Cấu trúc Dự án
-
-```text
-ai-study-agent/
-├── src/
-│   ├── agent/          # Orchestrator (ReAct loop), State, Prompt Templates, Tools
-│   ├── db/             # SQLAlchemy Models & SQLite Engine
-│   ├── documents/      # Logic xử lý Entity Document, File Parsing
-│   ├── eval/           # Framework chấm điểm LLM-as-judge
-│   ├── graph/          # Xây dựng Knowledge Graph (NetworkX), Topological Sort
-│   ├── llm/            # LLM Adapters (Gemini, Ollama), JSON Parsers
-│   ├── memory/         # Long-term Memory (ChromaDB), User Progress DB
-│   └── rag/            # Semantic Chunker, Embedder, Hybrid Retriever, BM25
-├── ui/
-│   ├── components/     # UI Tái sử dụng (Sidebar, Chat, Quiz Arena, Graph Viewer, Auth)
-│   └── router.py       # Điểu hướng trang giữa các chế độ học tập
-├── main.py             # Entry point Streamlit
-├── requirements.txt    # Danh sách thư viện Python
-└── ai-study-agent.md   # Thiết kế & Kế hoạch triển khai (Single Source of Truth)
-```
-
----
-
-## 🧪 Đóng góp Học thuật (Academic Evaluation)
-
-Một phần quan trọng của dự án là bộ **Evaluation Framework** (`src/eval/`) nhằm kiểm chứng giả thuyết:
-> *"Agent+RAG (tích hợp công cụ và suy luận) có mang lại hiệu quả học tập cá nhân hóa tốt hơn RAG-only thuần túy hay không?"*
-
-- Đánh giá sử dụng **LLM-as-judge** (offline local qua Ollama) theo 3 tiêu chí: `Faithfulness`, `Relevance`, và `Personalization`.
-- Dataset đánh giá: Được xây dựng cẩn thận, bao gồm các câu hỏi factual (tra cứu), reasoning (suy luận nhiều bước) và personalized (cần bộ nhớ phiên trước).
-
----
-*Developed by the AI Study Agent Team (Chương trình Sinh viên Công nghệ Tập sự).*
+Không commit `.env`, tài liệu người dùng, Chroma/SQL dumps hay model weights.
+Dùng `down`/`up` để giữ volume; không dùng `down -v` với dữ liệu cần giữ.
+DB cũ chưa có revision Alembic cần backup, schema comparison và review trước adoption.

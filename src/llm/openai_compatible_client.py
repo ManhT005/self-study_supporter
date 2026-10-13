@@ -10,15 +10,19 @@ import requests
 
 from src.llm.llm_adapter import LLMAdapter, ChatResponse
 from src.rag.embedding_provider import RateLimiter
+from src.llm.errors import ProviderAuthenticationError, ProviderUnavailable
+from study_supporter.domain.errors import QuotaExceeded
 
 
-class QuotaExhaustedError(RuntimeError):
+class QuotaExhaustedError(QuotaExceeded):
     """Lỗi quota theo NGÀY — MultiProviderLLM sẽ đánh dấu provider này 'chết'."""
+
     pass
 
 
 class RateLimitError(Exception):
     """Lỗi quota theo PHÚT — MultiProviderLLM sẽ thử provider kế tiếp ngay."""
+
     pass
 
 
@@ -94,25 +98,21 @@ class OpenAICompatibleClient(LLMAdapter):
                             f"[{self.provider_name}] Rate limit sau {self.max_retries} lần thử."
                         )
 
+                if response.status_code in {401, 403}:
+                    raise ProviderAuthenticationError("Provider authentication failed")
                 if response.status_code >= 400:
-                    error_body = self._safe_json(response)
-                    raise RateLimitError(
-                        f"[{self.provider_name}] HTTP {response.status_code}: "
-                        f"{error_body.get('error', {}).get('message', response.text[:200])}"
-                    )
+                    raise ProviderUnavailable(f"Provider HTTP {response.status_code}")
 
                 data = response.json()
                 return self._parse_response(data)
 
-            except (requests.ConnectionError, requests.Timeout) as e:
+            except (requests.ConnectionError, requests.Timeout):
                 if attempt < self.max_retries - 1:
-                    wait = 2 ** attempt
-                    print(f"⏳ [{self.provider_name}] Network error, retry sau {wait}s: {e}")
+                    wait = 2**attempt
+                    print(f"⏳ [{self.provider_name}] Network error, retry sau {wait}s")
                     time.sleep(wait)
                     continue
-                raise RateLimitError(
-                    f"[{self.provider_name}] Network error sau {self.max_retries} lần thử: {e}"
-                )
+                raise ProviderUnavailable("Provider network unavailable") from None
 
         # Should not reach here, but just in case
         raise RateLimitError(f"[{self.provider_name}] Hết số lần retry.")

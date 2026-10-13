@@ -1,11 +1,12 @@
+import os
 import requests
 from src.llm.llm_adapter import LLMAdapter, ChatResponse
 
 
 class OllamaClient(LLMAdapter):
-    def __init__(self, model: str = "qwen2.5:1.5b", base_url: str = "http://localhost:11434"):
+    def __init__(self, model: str = "qwen2.5:1.5b", base_url: str | None = None):
         self.model = model
-        self.base_url = base_url
+        self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")).rstrip("/")
 
     def chat(self, messages, system_prompt=None, stop_sequences=None) -> ChatResponse:
         ollama_messages = []

@@ -1,6 +1,6 @@
 import re
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from src.agent.tools.base import BaseTool
 from src.llm.json_utils import chat_and_parse_model
@@ -10,7 +10,7 @@ from src.llm.llm_adapter import LLMAdapter
 class QuizQuestion(BaseModel):
     question: str
     options: list[str] = Field(min_length=4, max_length=4)
-    correct_answer_index: int
+    correct_answer_index: int = Field(strict=True, ge=0, le=3)
     explanation: str
 
 
@@ -67,14 +67,11 @@ class GenerateQuizTool(BaseTool):
             quiz = chat_and_parse_model(self.llm, prompt, QuizList, max_retries=2)
 
             for q in quiz.questions:
-                q.options = [
-                    self._clean_option(opt)
-                    for opt in q.options
-                ]
+                q.options = [self._clean_option(opt) for opt in q.options]
 
-        except Exception as e:
+        except Exception:
             return (
-                f"Lỗi: không sinh được quiz hợp lệ sau nhiều lần thử ({e}). "
+                "Lỗi: không sinh được quiz hợp lệ sau nhiều lần thử. "
                 "Thử lại với nội dung khác hoặc ít câu hỏi hơn."
             )
 
@@ -110,12 +107,6 @@ class GenerateQuizTool(BaseTool):
         """
 
         return re.sub(r"^[A-D][\.\):]\s*", "", option.strip())
-
-
-
-
-
-
 
 
 # import json
