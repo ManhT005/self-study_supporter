@@ -22,3 +22,8 @@ hit-rate interpretation of `recall_at_k`; do not relabel their numbers as standa
 recall. V2 telemetry separates candidate `retrieved_evidence` from unmeasured
 `supporting_citations=null`, while retaining `citations` as a candidate alias.
 Use `n_unexpected_failed` for unexpected failures, not compatibility `n_failed`.
+
+The synthetic golden gate independently checks IDs/pages against the frozen corpus,
+recomputes per-record scores, summary and paired statistics, and rejects fabricated
+supporting-citation labels. A structurally valid reference is not proof of claim
+support; no human/judge citation precision is inferred from this gate.

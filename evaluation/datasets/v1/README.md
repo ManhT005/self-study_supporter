@@ -17,6 +17,12 @@ personalized-history fixtures and documents appearing in multiple splits.
 `.gitattributes` pins this fixture tree to LF so Git checkout on Windows and Linux
 preserves the same bytes and source hashes.
 
+Labels now distinguish required tools from allowed names. Non-scope smoke cases
+require `search_docs` only for declared tool-capable variants; RAG-only is exempt.
+Scope probes expect denial before any tool. Adding these labels changes the dataset
+SHA-256 while preserving the corpus hash. Golden revision 1 pins this labeled dataset
+and metric schema version 2; older reports retain their original metric semantics.
+
 This is not the proposed 120-question benchmark and does not pass Phase 1's ≥100-case
 acceptance gate. Before online signoff, provide approved PDFs/document hashes,
 independent labels for all seven categories, explicit isolated history/quiz fixtures,

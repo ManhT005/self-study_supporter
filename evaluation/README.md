@@ -7,6 +7,8 @@ Run the versioned, synthetic contract smoke without models, SQL or Chroma:
 ```powershell
 .venv/Scripts/python -m evaluation.runner_v2 --repetitions 3
 .venv/Scripts/python -m evaluation.runner_v2 --limit 3
+.venv/Scripts/python -m evaluation.runner_v2 --repetitions 3 --report-path-file data/evaluations/report-path.txt
+.venv/Scripts/python -m evaluation.gates --report-path-file data/evaluations/report-path.txt --golden evaluation/golden/v1.json
 ```
 
 The default runs all selected cases. `--limit` explicitly samples the first N cases;
@@ -71,7 +73,20 @@ tool arguments and exception strings. A hash replaces the answer, and safe citat
 IDs/pages, tool names and error codes support diagnostics. See [report policy](reports/README.md).
 
 Default pytest covers fake-provider regression/schema/scoring tests. CI also runs
-the synthetic CLI and retains its sanitized offline artifact. Independent ≥100-case
+the synthetic CLI and a [versioned structural golden gate](golden/README.md), retaining
+the sanitized artifact even on failure. The gate checks the frozen manifest,
+every case/variant/repetition, record-level scores, recomputed summary/paired stats,
+candidate provenance, expected vs unexpected outcomes, and independent semantic
+fixtures. It exits nonzero for corrupt/missing data or violated expectations.
+The golden applies to the full 15-case, three-repetition run; `--limit` is a smoke
+option and deliberately fails that full-run membership gate.
+
+Authorization coverage also exercises real SQL ownership through the application,
+legacy adapter and retrieval boundary, plus authenticated HTTP foreign chat/note/quiz
+requests with provider/vector/write assertions. A deterministic adversarial provider
+tests forged identity arguments after injected document text reaches its prompt.
+This proves the scoped boundary for those scripted cases, not general real-model
+prompt-injection robustness or real Chroma integration. Independent ≥100-case
 labels, frozen holdout, real-model repetitions, blinded review and operational UI
 gates remain required by the [roadmap](../docs/plans/ai-modernization/README.md).
 
