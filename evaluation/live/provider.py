@@ -8,6 +8,17 @@ from study_supporter.domain.errors import QuotaExceeded
 from study_supporter.domain.provider_errors import ProviderAuthenticationError, ProviderUnavailable
 
 
+def thinking_settings(model):
+    return {
+        "include_thoughts": False,
+        **(
+            {"thinking_level": "minimal"}
+            if model == "gemini-3.1-flash-lite"
+            else {"thinking_budget": 0}
+        ),
+    }
+
+
 class RequestBudget:
     def __init__(self, max_calls, seconds, journal, *, clock=time.monotonic):
         self.max_calls, self.seconds, self.journal = max_calls, seconds, Path(journal)
@@ -85,7 +96,7 @@ class PinnedGemini:
                     stop_sequences=stop_sequences,
                     temperature=self.temperature,
                     max_output_tokens=self.max_output_tokens,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False),
+                    thinking_config=types.ThinkingConfig(**thinking_settings(self.model)),
                 ),
             )
         except Exception as exc:

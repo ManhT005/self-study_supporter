@@ -106,6 +106,23 @@ def test_provider_diagnostics_keep_status_without_private_exception_text(tmp_pat
     assert llm.blocked and llm.budget.calls == 1
 
 
+def test_flash_lite_31_pins_minimal_thinking_without_legacy_token_budget(tmp_path):
+    client = Mock()
+    client.models.generate_content.return_value = SimpleNamespace(
+        text="answer", usage_metadata=None, model_version="gemini-3.1-flash-lite"
+    )
+    llm = PinnedGemini(
+        "gemini-3.1-flash-lite",
+        RequestBudget(1, 60, tmp_path / "calls.jsonl"),
+        api_key="test-only",
+        client=client,
+    )
+    llm.chat([{"role": "user", "content": "question"}])
+    thinking = client.models.generate_content.call_args.kwargs["config"].thinking_config
+    assert thinking.thinking_level.value == "MINIMAL" and thinking.thinking_budget is None
+    assert thinking.include_thoughts is False
+
+
 def test_deadline_and_input_cap_do_not_reserve_a_cloud_request(tmp_path):
     times = iter([0, 10])
     budget = RequestBudget(6, 5, tmp_path / "calls.jsonl", clock=lambda: next(times))

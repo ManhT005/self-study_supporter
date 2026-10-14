@@ -11,6 +11,7 @@ from evaluation.datasets.v2.scripts.validate_labels import load_labels
 from evaluation.live.fixtures import SnapshotFixtures, write_json
 from evaluation.live.manifest import environment_metadata, manifest_for
 from evaluation.live.runner import LiveCallbacks
+from evaluation.live.provider import thinking_settings
 from evaluation.live.gates import check_live_report
 from evaluation.live.review_export import export_review
 from evaluation.runner_v2 import run_comparison
@@ -26,7 +27,7 @@ def main(argv=None):
     parser.add_argument("--snapshot", required=True)
     parser.add_argument("--work-root", required=True)
     parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--model", default="gemini-2.5-flash")
+    parser.add_argument("--model", default="gemini-3.1-flash-lite")
     parser.add_argument(
         "--budget", type=int, default=6, help="Maximum total generateContent attempts; no retries"
     )
@@ -123,6 +124,7 @@ def main(argv=None):
                 "max_output_tokens": args.max_output_tokens,
                 "transport_attempts": 1,
             },
+            "thinking_config": thinking_settings(args.model),
             "samples": callbacks.telemetry,
         }
         output = Path(args.output_dir) / report["run_id"]

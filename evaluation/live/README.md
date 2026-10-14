@@ -32,7 +32,7 @@ afterwards. Explicit progress fixtures are seeded per invocation; nonempty chat
 history is rejected because the current production AgentPort does not consume it.
 Do not claim chat-memory evaluation support or QA-09 closure from this limitation.
 
-Gemini is pinned explicitly (default `gemini-2.5-flash`), with no `auto` selection,
+Gemini is pinned explicitly (default `gemini-3.1-flash-lite`), with no `auto` selection,
 fallback or transport retry. Every model attempt reserves a durable budget slot
 before transport. The default smoke allows at most three cases, one repetition,
 six total model attempts, 768 output tokens/call, a 24,000-character input cap,
@@ -40,10 +40,14 @@ six total model attempts, 768 output tokens/call, a 24,000-character input cap,
 failures disable further requests. Missing response usage/version remains unknown;
 cost is never invented. The original ReAct maximum five iterations remains unchanged,
 including nested quiz calls subject to the same global request budget.
+Flash-Lite 3.1 uses explicit `thinking_level=minimal`; the retained 2.5 setting uses
+`thinking_budget=0`. Both omit thoughts. The exact setting is recorded in the live
+sidecar. A model listing is not proof of generation availability: the initial 2.5
+smoke returned HTTP 404, so a separate run explicitly pins 3.1 instead of fallback.
 
 ```powershell
 # Supply GEMINI_API_KEY securely in the environment; never print or commit it.
-python -m evaluation.live.cli --mode online --purpose smoke --dataset data/eval_private/v2/smoke.jsonl --snapshot data/eval_private/v2/snapshot --work-root data/eval_private/v2/work --output-dir data/eval_private/v2/runs --model gemini-2.5-flash --budget 6
+python -m evaluation.live.cli --mode online --purpose smoke --dataset data/eval_private/v2/smoke.jsonl --snapshot data/eval_private/v2/snapshot --work-root data/eval_private/v2/work --output-dir data/eval_private/v2/runs --model gemini-3.1-flash-lite --budget 6
 ```
 
 The paired runner/metric schema 2 are reused. Initial ranking and union success
@@ -69,6 +73,7 @@ repository contains no fabricated ≥100-case dataset or human approvals. One
 approved source/three unreviewed engineering cases can demonstrate a live dry run,
 not Phase 1 quality acceptance; LangChain/LangGraph remain gated.
 
-Gemini configuration references: [model](https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash),
+Gemini configuration references: [model](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite),
+[thinking](https://ai.google.dev/gemini-api/docs/gemini-3),
 [pricing](https://ai.google.dev/gemini-api/docs/pricing),
 [Python SDK](https://github.com/googleapis/python-genai).
