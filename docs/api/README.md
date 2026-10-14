@@ -1,8 +1,10 @@
 # Frontend handoff contract (proposal for P1)
 
-This is a design contract, not a running HTTP API. P0 exposes Python retrieval DTOs
-and ports; no FastAPI server or Next.js client has been deployed. The accompanying
-OpenAPI document gives the future client a bounded retrieval mock surface.
+The running FastAPI adapter now lives in `apps/api/app/main.py`. Its runtime
+OpenAPI snapshot is `runtime-openapi.json`, used to generate frontend API types.
+See [workspace operations](../operations/learning-workspace.md) for startup and
+limits. `openapi.yaml` and the text below remain historical retrieval proposals;
+they are not the current HTTP contract.
 
 - Identity comes from the authenticated session/token; no request body `user_id`.
 - Retrieve accepts document IDs, question and positive top_k. Server resolves each

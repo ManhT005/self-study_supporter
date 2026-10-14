@@ -5,6 +5,14 @@ One `study-supporter` distribution contains all product use cases. Streamlit und
 owns explicit database lifecycle, lazy shared embeddings and per-account learning
 sessions. No user-bound retriever or agent is cached across accounts.
 
+The document-first migration adds `apps/api` as a FastAPI HTTP adapter and
+`apps/web` as a Next.js presentation adapter. Both reuse the same distribution;
+FastAPI imports never enter the pure core. Next.js proxies same-origin `/api` and
+receives dedicated HTTP DTOs rather than ORM models. The runtime OpenAPI snapshot
+generates TypeScript types. See [implementation ADRs](../design/ui-v1/IMPLEMENTATION.md)
+and [operations](../operations/learning-workspace.md). Streamlit remains until the
+original-data restore/rollback and real-provider gates pass.
+
 | Layer | Responsibility |
 | --- | --- |
 | domain | Documents, quiz/graph validation, authenticated errors, conversation policy |
@@ -14,6 +22,8 @@ sessions. No user-bound retriever or agent is cached across accounts.
 | orchestration/legacy_react | Original text parser and five-step tool workflow |
 | bootstrap | Resource wiring and provider priority |
 | apps/streamlit_legacy | Authentication/session adapter and presentation |
+| apps/api | HTTP DTOs, cookie sessions, Origin validation, ownership, bounded dispatch |
+| apps/web | Responsive learning workspace, forms, queries, evidence and quiz presentation |
 
 Dependencies point from entrypoints/bootstrap to application, domain and injected
 adapters. Application may call pure AI algorithms; pure layers cannot import UI,
