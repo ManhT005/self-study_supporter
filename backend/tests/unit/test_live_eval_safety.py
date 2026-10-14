@@ -84,6 +84,26 @@ def test_provider_429_is_sanitized_and_disables_further_attempts(tmp_path):
     with pytest.raises(ProviderUnavailable):
         llm.chat([{"role": "user", "content": "another"}])
     assert client.models.generate_content.call_count == 1 and llm.budget.calls == 1
+    assert llm.failure_http_status == 429 and llm.failure_type == "OTHER"
+
+
+def test_provider_diagnostics_keep_status_without_private_exception_text(tmp_path):
+    class ClientError(Exception):
+        code = 400
+
+    client = Mock()
+    client.models.generate_content.side_effect = ClientError("private-key-SECRET private prompt")
+    llm = PinnedGemini(
+        "gemini-2.5-flash",
+        RequestBudget(1, 60, tmp_path / "calls.jsonl"),
+        api_key="test-only",
+        client=client,
+    )
+    with pytest.raises(ProviderUnavailable) as failure:
+        llm.chat([{"role": "user", "content": "question"}])
+    assert str(failure.value) == "Provider request failed"
+    assert llm.failure_http_status == 400 and llm.failure_type == "ClientError"
+    assert llm.blocked and llm.budget.calls == 1
 
 
 def test_deadline_and_input_cap_do_not_reserve_a_cloud_request(tmp_path):

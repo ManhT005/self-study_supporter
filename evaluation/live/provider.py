@@ -42,6 +42,8 @@ class PinnedGemini:
         self.usage = []
         self.model_versions = set()
         self.failure_reason = None
+        self.failure_http_status = None
+        self.failure_type = None
 
     def chat(self, messages, system_prompt=None, stop_sequences=None):
         if self.blocked:
@@ -88,6 +90,26 @@ class PinnedGemini:
             )
         except Exception as exc:
             code = getattr(exc, "code", None)
+            # Only numeric status and known class names are safe shared diagnostics.
+            # SDK messages/URLs/bodies may contain credentials or source text.
+            self.failure_http_status = (
+                code if isinstance(code, int) and 100 <= code <= 599 else None
+            )
+            known_types = {
+                "ClientError",
+                "ServerError",
+                "ConnectError",
+                "ConnectTimeout",
+                "ReadTimeout",
+                "WriteTimeout",
+                "PoolTimeout",
+                "ProxyError",
+                "RemoteProtocolError",
+                "SSLError",
+                "TypeError",
+                "ValueError",
+            }
+            self.failure_type = type(exc).__name__ if type(exc).__name__ in known_types else "OTHER"
             self.failure_reason = "PROVIDER_RATE_LIMIT" if code == 429 else "PROVIDER_FAILURE"
             self.blocked = True
             if code == 429:

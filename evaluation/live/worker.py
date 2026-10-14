@@ -73,6 +73,8 @@ def run_worker(root, case, variant, settings, journal):
                 else None,
                 "calls_attempted": llm.budget.calls if llm else 0,
                 "failure_reason": llm.failure_reason if llm else "FIXTURE_INITIALIZATION_FAILED",
+                "failure_http_status": llm.failure_http_status if llm else None,
+                "failure_type": llm.failure_type if llm else None,
                 "model_versions": sorted(llm.model_versions) if llm else [],
                 "partial_usage_observations": llm.usage if llm else [],
             },
