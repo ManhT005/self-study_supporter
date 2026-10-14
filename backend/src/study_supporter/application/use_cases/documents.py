@@ -9,6 +9,13 @@ class OwnedDocuments:
     def latest(self, context: AppContext):
         return self.repository.latest(context.user_id)
 
+    def list(self, context: AppContext):
+        return self.repository.list(context.user_id)
+
+    def recover_interrupted(self):
+        """Single-writer startup recovery, before requests are accepted."""
+        return self.repository.recover_interrupted()
+
     def get(self, context: AppContext, document_id: int):
         return self.repository.get(context.user_id, document_id)
 

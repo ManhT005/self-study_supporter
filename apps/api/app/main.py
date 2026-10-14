@@ -225,6 +225,12 @@ def create_app(factory_builder=None, http_settings=None):
         )
         return response
 
+    from apps.api.app.learning import install_learning
+
+    install_learning(app, principal)
+    from apps.api.app.body_limit import BodyLimit
+
+    app.add_middleware(BodyLimit)
     return app
 
 

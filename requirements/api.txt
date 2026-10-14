@@ -1,7 +1,7 @@
 # HTTP adapter dependencies, separate from the framework-independent core.
 fastapi==0.143.0
 starlette==1.8.0
-uvicorn==0.34.0
+uvicorn==0.54.0
 python-multipart==0.0.32
 annotated-doc==0.0.5
 typing-inspection==0.4.4
