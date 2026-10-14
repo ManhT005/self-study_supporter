@@ -158,3 +158,58 @@ def test_ai_dispatch_releases_admission_slot_after_failure():
         with pytest.raises(QuotaExceeded):
             services.call_ai(fail)
     assert services.call_ai(lambda: "success") == "success"
+
+
+def test_tc_sec_01_02_foreign_chat_note_quiz_never_call_provider_vectors_or_write(
+    http, monkeypatch
+):
+    from unittest.mock import Mock
+
+    client, factory = http
+    alice_doc = upload(client).json()
+    bob = {"username": "bobby", "password": "fixture-password"}
+    assert client.post("/api/v1/auth/register", json=bob).status_code == 201
+    assert client.post("/api/v1/auth/login", json=bob).status_code == 200
+    bob_doc = upload(client, name="bob.pdf").json()
+    bob_context = factory.authentication.authenticate(bob["username"], bob["password"])
+    bob_progress = factory.progress_repository.get_summary(bob_context.user_id)
+    document_before = factory.document_repository.get(bob_context.user_id, bob_doc["id"])
+    store_before = (
+        tuple(factory.stores[bob_doc["id"]].chunks),
+        tuple(factory.stores[bob_doc["id"]].notes),
+    )
+    assert client.post("/api/v1/auth/logout").status_code == 204
+    assert (
+        client.post(
+            "/api/v1/auth/login", json={"username": "alice", "password": "fixture-password"}
+        ).status_code
+        == 200
+    )
+    provider = Mock(wraps=factory.provider)
+    vectors = Mock(wraps=factory.vector_store)
+    ranking = Mock(wraps=factory.retriever)
+    monkeypatch.setattr(factory, "provider", provider)
+    monkeypatch.setattr(factory, "vector_store", vectors)
+    monkeypatch.setattr(factory, "retriever", ranking)
+    for endpoint, body in [
+        ("chat", {"question": "secret?"}),
+        ("notes", {"note": "foreign note"}),
+        ("quizzes", {"num_questions": 1}),
+    ]:
+        foreign = client.post(f"/api/v1/documents/{bob_doc['id']}/{endpoint}", json=body)
+        missing = client.post(f"/api/v1/documents/999999/{endpoint}", json=body)
+        assert foreign.status_code == missing.status_code == 404
+        assert {k: v for k, v in foreign.json().items() if k != "request_id"} == {
+            k: v for k, v in missing.json().items() if k != "request_id"
+        }
+        assert "citations" not in foreign.json() and "bob.pdf" not in foreign.text
+    provider.assert_not_called()
+    vectors.assert_not_called()
+    ranking.assert_not_called()
+    assert factory.document_repository.get(bob_context.user_id, bob_doc["id"]) == document_before
+    assert factory.progress_repository.get_summary(bob_context.user_id) == bob_progress
+    assert (
+        tuple(factory.stores[bob_doc["id"]].chunks),
+        tuple(factory.stores[bob_doc["id"]].notes),
+    ) == store_before
+    assert client.get(f"/api/v1/documents/{alice_doc['id']}").status_code == 200

@@ -29,8 +29,11 @@ jobs:
       - run: ruff format --check .
       - run: python -m pytest -q
       - name: Synthetic agent and evaluation regression
-        run: python -m evaluation.runner_v2 --repetitions 3
+        run: python -m evaluation.runner_v2 --repetitions 3 --report-path-file data/evaluations/report-path.txt
+      - name: Versioned structural golden gate
+        run: python -m evaluation.gates --report-path-file data/evaluations/report-path.txt --golden evaluation/golden/v1.json
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: synthetic-ai-evaluation
           path: data/evaluations/

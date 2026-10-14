@@ -1,0 +1,95 @@
+{
+  "golden_version": "1",
+  "metric_schema_version": "2",
+  "dataset_path": "evaluation/datasets/v1/smoke.jsonl",
+  "manifest": {
+    "metric_schema_version": "2",
+    "dataset_sha256": "d139fc49ebf04c5ea415d275f4b194c7131c171476b332f7cfd3e7d46258672a",
+    "source_hash": "sha256:9d2a1b2798b4a41dc2c67044c73428ef0349f4ed681977f325c8991735feab7a",
+    "execution_mode": "offline",
+    "provider": "synthetic",
+    "model_id": "synthetic-echo-v1",
+    "embedding_id": "none/synthetic-lexical-v1",
+    "index_hash": "sha256:9d2a1b2798b4a41dc2c67044c73428ef0349f4ed681977f325c8991735feab7a",
+    "top_k": 3,
+    "seed": 42,
+    "temperature": null,
+    "tool_capabilities": {"rag_only": false, "legacy_react": true},
+    "prompt_hashes": {
+      "rag_only": "43705bcfe2bdba36cd02595adcf14630d2a41ad0327a817ced69554e54ad38c6",
+      "legacy_react": "db9fe1016fed88909f1eb6ca787285f723655b6d369b11553210ba1e74aef9ff"
+    }
+  },
+  "repetitions": 3,
+  "cases": {
+    "FACT-001": {"category": "factual"},
+    "FACT-002": {"category": "factual"},
+    "FACT-003": {"category": "factual"},
+    "FACT-004": {"category": "factual"},
+    "FACT-005": {"category": "factual"},
+    "FACT-006": {"category": "factual"},
+    "SYN-001": {"category": "synonyms"},
+    "SYN-002": {"category": "synonyms"},
+    "SYN-003": {"category": "synonyms"},
+    "HOP-001": {"category": "multi_hop"},
+    "HOP-002": {"category": "multi_hop"},
+    "NONE-001": {"category": "unanswerable"},
+    "NONE-002": {"category": "unanswerable"},
+    "SCOPE-001": {"category": "privacy", "expected_error": "AUTH_SCOPE"},
+    "SCOPE-002": {"category": "privacy", "expected_error": "AUTH_SCOPE"}
+  },
+  "summary": {
+    "rag_only": {
+      "n_total": 45, "n_completed": 39, "n_expected_denied": 6, "n_unexpected_failed": 0, "n_incomplete": 0,
+      "metrics": {
+        "initial_hit_rate_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "initial_recall_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "initial_mrr_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "initial_ndcg_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "any_search_hit": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "union_evidence_recall": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "citation_scope_validity": {"mean": 1.0, "n_eligible": 45, "n_observed": 33, "n_unknown": 12},
+        "required_tool_coverage": {"mean": null, "n_eligible": 0, "n_observed": 0, "n_unknown": 0},
+        "tool_selection_allowed": {"mean": null, "n_eligible": 45, "n_observed": 0, "n_unknown": 45},
+        "tool_validation_rate": {"mean": null, "n_eligible": 45, "n_observed": 0, "n_unknown": 45},
+        "abstention_correctness": {"mean": null, "n_eligible": 6, "n_observed": 0, "n_unknown": 6},
+        "expected_error_match": {"mean": 1.0, "n_eligible": 6, "n_observed": 6, "n_unknown": 0}
+      }
+    },
+    "legacy_react": {
+      "n_total": 45, "n_completed": 39, "n_expected_denied": 6, "n_unexpected_failed": 0, "n_incomplete": 0,
+      "metrics": {
+        "initial_hit_rate_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "initial_recall_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "initial_mrr_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "initial_ndcg_at_k": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "any_search_hit": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "union_evidence_recall": {"mean": 1.0, "n_eligible": 33, "n_observed": 33, "n_unknown": 0},
+        "citation_scope_validity": {"mean": 1.0, "n_eligible": 45, "n_observed": 33, "n_unknown": 12},
+        "required_tool_coverage": {"mean": 1.0, "n_eligible": 39, "n_observed": 39, "n_unknown": 0},
+        "tool_selection_allowed": {"mean": 1.0, "n_eligible": 45, "n_observed": 39, "n_unknown": 6},
+        "tool_validation_rate": {"mean": null, "n_eligible": 45, "n_observed": 0, "n_unknown": 45},
+        "abstention_correctness": {"mean": null, "n_eligible": 6, "n_observed": 0, "n_unknown": 6},
+        "expected_error_match": {"mean": 1.0, "n_eligible": 6, "n_observed": 6, "n_unknown": 0}
+      }
+    }
+  },
+  "metric_cases": [
+    {"id":"TC-EVAL-01a","gold":["A","B"],"searches":[["A","X","Y"]],"evidence":["A","X","Y"],"top_k":3,"expected":{"hit_rate_at_k":1.0,"recall_at_k":0.5,"initial_recall_at_k":0.5,"union_evidence_recall":0.5}},
+    {"id":"TC-EVAL-01b","gold":["A","B"],"searches":[["A","B","B"]],"evidence":["A","B","B"],"top_k":3,"expected":{"hit_rate_at_k":1.0,"recall_at_k":1.0,"union_evidence_recall":1.0}},
+    {"id":"TC-EVAL-01c","gold":["A","B"],"searches":[["X","Y","Z"]],"evidence":["X","Y","Z"],"top_k":3,"expected":{"hit_rate_at_k":0.0,"recall_at_k":0.0,"mrr_at_k":0.0,"ndcg_at_k":0.0}},
+    {"id":"TC-EVAL-01d","gold":["A"],"searches":[["X","A","Y"]],"evidence":["X","A","Y"],"top_k":3,"expected":{"mrr_at_k":0.5}},
+    {"id":"TC-EVAL-01e","gold":[],"searches":[["X"]],"evidence":["X"],"top_k":3,"expected":{"recall_at_k":null,"initial_recall_at_k":null,"any_search_hit":null}},
+    {"id":"TC-RETR-01","gold":["A"],"searches":[[],["A"]],"evidence":["A"],"top_k":3,"expected":{"initial_hit_rate_at_k":0.0,"initial_recall_at_k":0.0,"any_search_hit":1.0,"union_evidence_recall":1.0}},
+    {"id":"TC-RETR-02","gold":["A","B"],"searches":[["A"],["A"]],"evidence":["A","A"],"top_k":3,"expected":{"union_evidence_recall":0.5}},
+    {"id":"TC-RETR-03","gold":["A"],"searches":[["A"],["X"]],"evidence":["A","X"],"top_k":3,"expected":{"initial_hit_rate_at_k":1.0,"any_search_hit":1.0,"union_evidence_recall":1.0}},
+    {"id":"TC-RETR-04","gold":["A"],"searches":[],"evidence":[],"top_k":3,"expected":{"initial_hit_rate_at_k":0.0,"any_search_hit":0.0,"union_evidence_recall":0.0}},
+    {"id":"TC-TOOL-01","gold":["A"],"searches":[],"evidence":[],"top_k":3,"required_tools":["search_docs"],"tool_capable":true,"expected":{"tool_selection_allowed":null,"required_tool_coverage":0.0}},
+    {"id":"TC-TOOL-02","gold":["A"],"searches":[["A"]],"evidence":["A"],"top_k":3,"required_tools":["search_docs"],"tool_calls":["search_docs"],"tool_capable":true,"expected":{"tool_selection_allowed":1.0,"required_tool_coverage":1.0,"tool_validation_rate":null}},
+    {"id":"TC-TOOL-03","gold":["A"],"searches":[],"evidence":[],"top_k":3,"required_tools":["search_docs"],"tool_calls":["unknown_tool"],"tool_capable":true,"expected":{"tool_selection_allowed":0.0,"required_tool_coverage":0.0,"tool_validation_rate":null}},
+    {"id":"TC-TOOL-04","gold":["A"],"searches":[["A"]],"evidence":["A"],"top_k":3,"required_tools":["search_docs"],"tool_capable":false,"expected":{"tool_selection_allowed":null,"required_tool_coverage":null}},
+    {"id":"TC-TOOL-05","gold":["A"],"searches":[["A"]],"evidence":["A"],"top_k":3,"tool_calls":["search_docs"],"tool_capable":true,"expected":{"tool_validation_rate":null}},
+    {"id":"TC-TOOL-06","gold":["A"],"searches":[["A"]],"evidence":["A"],"top_k":3,"required_tools":["search_docs","get_progress"],"allowed_tools":["search_docs","get_progress"],"tool_calls":["search_docs"],"tool_capable":true,"expected":{"required_tool_coverage":0.5}},
+    {"id":"TC-RETR-05","gold":["A"],"searches":[],"evidence":["X","Y","Z","A"],"top_k":3,"expected":{"initial_hit_rate_at_k":0.0,"any_search_hit":1.0,"union_evidence_recall":1.0}}
+  ]
+}
