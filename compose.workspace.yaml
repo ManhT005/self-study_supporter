@@ -1,0 +1,57 @@
+# Preview only: isolated volumes, no existing Streamlit/Chroma writers.
+name: self-study-workspace-preview
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: study_workspace
+      POSTGRES_USER: study
+      POSTGRES_PASSWORD: ${WORKSPACE_DB_PASSWORD:?Set WORKSPACE_DB_PASSWORD}
+    volumes: ["workspace_postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U study -d study_workspace"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  migrate:
+    image: self-study-workspace-api:local
+    environment: &api-environment
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: study_workspace
+      POSTGRES_USER: study
+      POSTGRES_PASSWORD: ${WORKSPACE_DB_PASSWORD:?Set WORKSPACE_DB_PASSWORD}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      API_SECURE_COOKIE: ${API_SECURE_COOKIE:-true}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    command: ["python", "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"]
+    healthcheck: { disable: true }
+    depends_on: { db: { condition: service_healthy } }
+  api:
+    image: self-study-workspace-api:local
+    build: { context: ., dockerfile: Dockerfile, target: api }
+    init: true
+    environment: *api-environment
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes: ["workspace_data:/app/data", "workspace_hf_cache:/home/study/.cache/huggingface"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      db: { condition: service_healthy }
+    mem_limit: 6g
+    cpus: 2.0
+  web:
+    image: self-study-workspace-web:local
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    init: true
+    environment: { API_ORIGIN: "http://api:8000" }
+    ports: ["127.0.0.1:${WORKSPACE_WEB_PORT:-3000}:3000"]
+    depends_on: { api: { condition: service_healthy } }
+volumes:
+  workspace_postgres:
+  workspace_data:
+  workspace_hf_cache:

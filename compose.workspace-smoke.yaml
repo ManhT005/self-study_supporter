@@ -1,0 +1,4 @@
+# Test-only provider injection. Real PostgreSQL and Chroma, synthetic AI.
+services:
+  api:
+    command: ["python", "-m", "uvicorn", "scripts.http_container_smoke:create_smoke_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--no-proxy-headers"]
