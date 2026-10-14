@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, model_validator
 
 Category = Literal[
     "factual", "multi_hop", "synonyms", "unanswerable", "quiz", "personalized", "privacy"
@@ -21,6 +21,7 @@ ErrorCode = Literal[
     "QUIZ_INVALID",
     "INTERNAL",
 ]
+METRIC_SCHEMA_VERSION = "2"
 
 
 class StrictModel(BaseModel):
@@ -38,6 +39,7 @@ class EvaluationCase(StrictModel):
     reference_facts: tuple[str, ...] = ()
     must_abstain: bool = False
     allowed_tools: tuple[str, ...] = ()
+    required_tools: tuple[str, ...] = ()
     requires_history: bool = False
     history_fixture: str | None = None
     expected_error: ErrorCode | None = None
@@ -58,11 +60,14 @@ class EvaluationCase(StrictModel):
             raise ValueError("Unanswerable cases cannot label supporting chunks")
         if not set(self.expected_doc_ids).issubset(self.document_ids):
             raise ValueError("Expected documents must be inside the requested scope")
+        if not set(self.required_tools).issubset(self.allowed_tools):
+            raise ValueError("Required tools must be allowed")
         return self
 
 
 class RunManifest(StrictModel):
     schema_version: Literal["1"] = "1"
+    metric_schema_version: Literal["2"] = METRIC_SCHEMA_VERSION
     git_sha: str = Field(pattern=r"^[a-f0-9]{40}$")
     git_dirty: bool
     dataset_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
@@ -71,6 +76,7 @@ class RunManifest(StrictModel):
     provider: str
     model_id: str
     prompt_hashes: dict[str, str] = Field(min_length=1)
+    tool_capabilities: dict[str, bool] = Field(default_factory=dict)
     embedding_id: str
     index_hash: str
     top_k: int = Field(ge=1)
@@ -114,12 +120,15 @@ class EvaluationRecord(StrictModel):
     answer_sha256: str | None = None
     retrieved_chunk_ids: tuple[str, ...] = ()
     citations: tuple[CitationRecord, ...] = ()
+    retrieved_evidence: tuple[CitationRecord, ...] = ()
+    supporting_citations: tuple[CitationRecord, ...] | None = None
     retrieval_calls: tuple[RetrievalRecord, ...] = ()
     steps: int = 0
     tools_used: tuple[str, ...] = ()
     usage: dict[str, int | float | None] | None = None
     error_code: ErrorCode | None = None
-    scores: dict[str, float | None] = Field(default_factory=dict)
+    expected_error: ErrorCode | None = None
+    scores: dict[str, StrictFloat | None] = Field(default_factory=dict)
 
 
 def dataset_hash(path: str | Path) -> str:

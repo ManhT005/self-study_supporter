@@ -121,7 +121,7 @@ Current frontend documents are real “document workspaces,” **not** course en
 | Tool-call validity | Valid schema + authorized dispatch / all attempted calls | ≥99% on structured test set |
 | Citation precision | Verified supporting evidence references / cited references | ≥95% on manually labeled set |
 | Faithfulness | Human/LLM-judge assessment grounded in document | ≥ baseline; target +5 percentage points when statistically supported |
-| Retrieval recall@5 | Relevant labeled questions with relevant chunk in top 5 / eligible questions | ≥ baseline; target +5 pp when feasible |
+| Retrieval recall@5 | Relevant distinct chunks in top 5 / all gold relevant chunks, averaged over eligible cases | ≥ baseline; target +5 pp when feasible |
 | Quiz structural validity | Valid generated question sets / attempted generations | ≥99% with bounded retry; failures surfaced |
 | Resume correctness | Restart/retry cases retaining authorized state and no duplicate effects | 100% scripted cases |
 | p95 interactive latency | p95 request duration under declared load / model | ≤1.5× baseline for advanced path unless quality gain justifies |

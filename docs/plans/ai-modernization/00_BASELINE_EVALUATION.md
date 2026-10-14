@@ -67,7 +67,8 @@ Run record must contain: `case_id`, `variant`, `run_id`, Git SHA, prompt hash, m
 
 | Metric | Definition | Source |
 |---|---|---|
-| Recall@k | fraction of answerable labeled cases where at least one relevant chunk appears top-k | gold chunk labels |
+| Hit Rate@k | fraction of gold-labeled cases with at least one relevant chunk in top-k | gold chunk labels |
+| Recall@k | distinct relevant chunks in top-k / all distinct gold relevant chunks, averaged over eligible cases | gold chunk labels |
 | MRR@k | reciprocal rank of first relevant chunk averaged over cases | ordered retrieval |
 | nDCG@k | gain-discounted relevance, normalized to ideal ranked list | graded relevance judgments |
 | Citation precision | cited evidence pieces that directly support claims / all cited pieces | manual adjudication |
@@ -75,11 +76,18 @@ Run record must contain: `case_id`, `variant`, `run_id`, Git SHA, prompt hash, m
 | Abstention correctness | unanswerable cases that decline unsupported claims / unanswerable cases | case labels |
 | Valid tool call rate | successful JSON-schema+permission validations / attempts | trace records |
 | Tool selection accuracy | turns whose tool set meets the expected capability / labeled turns | category labels |
+| Required tool coverage | required tool names called / required names, for tool-capable variants only | required vs allowed labels |
 | Quiz exactness | generated sets satisfying count, four distinct options, one correct index, support | schema + human check |
 | Latency p50/p95 | request elapsed time in ms, per variant and hardware/model | monotonic timing |
 | Cost | input/output tokens or estimated local compute per completed case | provider telemetry |
 
 LLM-as-judge can help assess faithfulness/relevance but is **secondary** to deterministic structural checks and a blind human-labeled sample. In `evaluation/metrics.py`, score-parse failures are already tracked; ensure they do not silently become “success” or disappear from denominators. Report both `n_valid` and `n_failed`.
+
+Metric schema version 2 implements these corrected definitions; version 1's
+`recall_at_k` was Hit Rate@k. Initial-call ranking includes empty retrievals;
+`any_search_hit` and distinct `union_evidence_recall` measure later searches
+separately without inventing a union top-k rank or final-answer context.
+Expected fixture denials and unexpected failures have separate summary counts.
 
 ## 5. Fair experimental protocol
 

@@ -14,3 +14,11 @@ verifies framework behavior and cannot establish model quality or production lat
 Live callbacks must also sanitize manifest identifiers and supply an authorized,
 frozen document/index snapshot; the harness cannot independently verify a caller's
 declared provider, checkpoint isolation or model settings.
+
+Metric schema version 2 corrects standard Recall@k and adds an explicit hit rate,
+initial ranking vs any-search/union coverage, required-tool coverage and exclusive
+outcome counts. Earlier reports without `metric_schema_version` retain version 1's
+hit-rate interpretation of `recall_at_k`; do not relabel their numbers as standard
+recall. V2 telemetry separates candidate `retrieved_evidence` from unmeasured
+`supporting_citations=null`, while retaining `citations` as a candidate alias.
+Use `n_unexpected_failed` for unexpected failures, not compatibility `n_failed`.
