@@ -10,7 +10,11 @@ def main():
     parser.add_argument("--user-id", required=True, help="Dedicated fixture account ID")
     parser.add_argument("--dataset", default="data/eval_dataset.json")
     parser.add_argument("--output", default="data/eval_results.json")
+    parser.add_argument("--limit", type=int, help="Explicit smoke-test sample size")
+    parser.add_argument("--model", help="Ollama model override; otherwise use configured model")
     args = parser.parse_args()
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit must be positive")
     from dotenv import load_dotenv
     from study_supporter.bootstrap import ApplicationFactory
     from study_supporter.config import Settings
@@ -28,7 +32,9 @@ def main():
     from evaluation.eval_runner import load_eval_dataset, run_eval, save_results
 
     load_dotenv()
-    settings = replace(Settings.from_mapping(os.environ), ollama_model="qwen3:1.7b")
+    settings = Settings.from_mapping(os.environ)
+    if args.model:
+        settings = replace(settings, ollama_model=args.model)
     with ApplicationFactory(settings) as services:
         services.verify_schema()
         context = AppContext(args.user_id)
@@ -53,9 +59,10 @@ def main():
         ]
         # The experimental comparison retains iteration/tool metrics and personalized history.
         agent = ReActOrchestrator(llm, tools)
-        results = run_eval(
-            load_eval_dataset(args.dataset)[:5], store, BM25Index(chunks), embed_query, llm, agent
-        )
+        dataset = load_eval_dataset(args.dataset)
+        if args.limit is not None:
+            dataset = dataset[: args.limit]
+        results = run_eval(dataset, store, BM25Index(chunks), embed_query, llm, agent)
         save_results(results, args.output)
     print(f"Saved {len(results)} evaluation results; online model calls were explicitly requested.")
 

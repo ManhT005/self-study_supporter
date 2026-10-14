@@ -41,6 +41,21 @@ schema/concurrency task. Quiz generation still samples the first five chunks;
 retrieval quality and Vietnamese tokenization changes require separate benchmarks.
 
 Root `src/` and `ui/` have been removed. `evaluation/` contains opt-in experiments;
-tests are unified under `backend/tests`. Next.js/FastAPI/LangGraph are not introduced.
+tests are unified under `backend/tests`, with HTTP tests in `apps/api/tests`.
+Next.js/FastAPI are additive adapters; LangChain/LangGraph remain gated proposals.
 See [boundaries](module-boundaries.md), [ADR](adr/repository-consolidation.md),
 [historical baseline](current-state.md) and [current acceptance](../reports/repository-consolidation-acceptance.md).
+
+Answer execution uses the framework-independent `AgentPort` and frozen `AgentResult`.
+`AnswerQuestionUseCase` validates the bound context and response evidence scope;
+`LegacyReActAdapter` creates a recorder, tools and orchestrator for each invocation.
+It preserves the original parser/prompt/five-step loop, accumulates distinct evidence
+across searches, and exposes only tool names and hashed retrieval metadata. Usage,
+abstention and tool validation remain unknown when legacy execution cannot measure them.
+`ApplicationFactory(agent_factory=...)` is the composition seam for future adapters.
+`apps/api/app/learning_services.py` owns session readiness and AI admission; routes
+authenticate, validate HTTP DTOs and map responses. HTTP shapes remain unchanged.
+
+The [AI roadmap](../plans/ai-modernization/README.md) and
+[execution status](../plans/ai-modernization/IMPLEMENTATION_STATUS.md) distinguish the
+offline evaluation foundation from the pending online benchmark and later frameworks.

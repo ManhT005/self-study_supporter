@@ -57,6 +57,9 @@ def create_app(factory_builder=None, http_settings=None):
             factory_builder or (lambda: ApplicationFactory(Settings.from_mapping(os.environ)))
         )
         app.state.factory = factory
+        from apps.api.app.learning_services import LearningServices
+
+        app.state.learning = LearningServices(factory)
         try:
             await run_in_threadpool(factory.verify_schema)
             if hasattr(factory.documents, "recover_interrupted"):

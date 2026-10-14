@@ -39,6 +39,7 @@ POSIX dùng `.venv/bin/`. Native UI cần runtime dependencies và migration; xe
 - [Docker/Ollama/backup](docs/operations/docker.md) và [migrations](docs/operations/migrations.md)
 - [Kết quả refactor](docs/reports/repository-consolidation-acceptance.md)
 - [Evaluation opt-in](evaluation/README.md)
+- [AI modernization roadmap](docs/plans/ai-modernization/README.md) and [implementation status](docs/plans/ai-modernization/IMPLEMENTATION_STATUS.md)
 - [HTTP API và frontend contract](docs/api/README.md)
 - [Kế hoạch foundation lịch sử](docs/plans/PHASE_0_ENGINEERING_FOUNDATION.md) và [bằng chứng cũ](docs/reports/p0-acceptance.md)
 

@@ -1,0 +1,2 @@
+# Fixture hashes must survive checkout on Windows and Linux unchanged.
+/evaluation/datasets/** text eol=lf
