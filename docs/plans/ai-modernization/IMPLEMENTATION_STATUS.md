@@ -1,5 +1,32 @@
 # Incremental implementation status — 2026-10-14
 
+## Current post-merge execution
+
+Current branch: `feature/ai-online-eval-baseline`, based on merged `develop`
+`79224d718ce154fbb1a2222fc9c5955e64ae4480`. The
+[execution plan](09_POST_MERGE_AI_EXECUTION_PLAN.md) governs this work. The
+[merge-SHA rebaseline](../../reports/ai-eval/POST_MERGE_BASELINE.md) verifies CI on
+that merge and a fresh offline run; independent G0 approval is still pending.
+
+| Milestone | Implementation / remaining acceptance |
+| --- | --- |
+| M0 / G0 | Merge verified, clean branch, local regression/golden passed; reviewer signoff pending |
+| M1 / G1 | V2 independent-label schema/validator and source/topic/split checks implemented; only one approved PDF, no independently annotated ≥100-case dataset |
+| M2 / G2 | Real SQL/BGE-M3/hybrid/full ReAct harness and fresh per-sample clones implemented; two-case Gemini smoke passed with three calls, full three-case accepted dry run pending |
+| M3 / G3 | Private answer export, blinded review packets and separate assignment map implemented; quality baseline/review/signoff pending |
+| M4 / M5 | LangChain POC and adopt/iterate/reject decision remain gated by G3 |
+
+Gemini calls are opt-in with a pinned model, durable request budget, no retries,
+no fallback and failure blocking. The current default is `gemini-3.1-flash-lite`
+with minimal thinking. The separate synthetic golden continues to use offline
+fixtures. See [live usage and limits](../../../evaluation/live/README.md) and
+[actual smoke/test evidence](../../reports/ai-eval/2026-10-14-live-evaluation.md).
+This does not close human labels, citation support, personalized chat-memory,
+UI acceptance or operational release gates. Stable application/frontend/persistence
+modules were not refactored in this post-merge slice.
+
+## Historical foundation and review slices
+
 Branch: `feature/ai-eval-foundation`, based on merged `develop` at
 `4302d971c31e1944b3280b20d3f1fc9f83135ea4` (UI PR #16). The ten roadmap documents
 from `APPLY_TO_REPO.md` are now under `docs/plans/ai-modernization/`. Phase 1 has an
@@ -14,8 +41,10 @@ the review's option A without merging or changing `develop`. Metric/tool/retriev
 semantics are corrected in `00a951c`; SQL/API scope coverage and the versioned
 golden CI gate are recorded in `ba36691`. See the
 [review resolution and fresh local evidence](../../reports/ai-eval/2026-10-14-review-resolution.md).
-QA-01 through QA-06 have local implementation/test evidence. Remote CI on the fix,
-independent Tech/Test Lead signoff and maintainer merge approval remain pending.
+QA-01 through QA-06 have local implementation/test evidence. The fix and foundation
+have since merged through PRs #17/#18; CI on the resulting merge was successful.
+Independent Tech/Test Lead phase signoff remains pending. The report below records
+the earlier slice, rather than evidence for the current online harness.
 
 ## Delivered in this branch
 
@@ -45,8 +74,8 @@ independent Tech/Test Lead signoff and maintainer merge approval remain pending.
 
 See the [local validation report](../../reports/ai-eval/2026-10-14-foundation.md).
 These checks establish offline behavior and packaging, not real-provider quality,
-production load performance, a deployment or remote CI success. V2's CLI is synthetic;
-live callback integration/provisioning remains separate opt-in work. The smoke uses
+production load performance or deployment. The foundation V2 CLI is synthetic;
+the current post-merge live CLI is described above. The synthetic smoke uses
 a search-only prompt and lexical retriever, not BGE-M3/hybrid production ranking.
 Unknown legacy tool validation, refusal and usage remain explicitly unmeasured.
 Metric schema version 2 distinguishes standard recall from hit rate, initial ranking

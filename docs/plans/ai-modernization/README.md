@@ -14,7 +14,8 @@ branch observations below remain historical inputs, not fresh acceptance evidenc
 
 After the foundation merge, start with the
 [post-merge execution plan](09_POST_MERGE_AI_EXECUTION_PLAN.md) and
-[fresh merge-SHA evidence](../../reports/ai-eval/POST_MERGE_BASELINE.md).
+[fresh merge-SHA evidence](../../reports/ai-eval/POST_MERGE_BASELINE.md), followed by
+[bounded live-smoke evidence](../../reports/ai-eval/2026-10-14-live-evaluation.md).
 
 | File | Scope | Primary deliverable |
 |---|---|---|
