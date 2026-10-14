@@ -48,6 +48,22 @@ class DocumentRepository:
             doc.chroma_collection_name = f"documents_{doc.id}"
             return document_data(doc)
 
+    def list(self, user_id):
+        with self.sessions() as session:
+            return [
+                document_data(doc)
+                for doc in session.query(Document)
+                .filter_by(user_id=int(user_id))
+                .order_by(Document.created_at.desc(), Document.id.desc())
+                .all()
+            ]
+
+    def recover_interrupted(self):
+        with self.sessions.begin() as session:
+            return (
+                session.query(Document).filter_by(status="processing").update({"status": "failed"})
+            )
+
     def get(self, user_id, document_id):
         with self.sessions() as session:
             doc = (

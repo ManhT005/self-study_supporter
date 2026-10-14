@@ -66,6 +66,71 @@ jobs:
       - run: python -m alembic -c backend/alembic.ini check
       - run: python -m pytest backend/tests/integration -q
 
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements/dev.txt -r requirements/api.txt
+      - run: python -m pip install --no-build-isolation --no-deps -e ./backend
+      - run: python -m pytest apps/api/tests -q
+      - run: python -m scripts.export_http_contract --check
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements/dev.txt -r requirements/api.txt
+      - run: python -m pip install --no-build-isolation --no-deps -e ./backend
+      - run: npm ci
+        working-directory: apps/web
+      - run: npm run api:types && git diff --exit-code -- src/lib/api/generated.d.ts
+        working-directory: apps/web
+      - run: npm run lint && npm run typecheck && npm test && npm run build
+        working-directory: apps/web
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: npm run test:e2e
+        working-directory: apps/web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-browser-artifacts
+          path: |
+            apps/web/test-results
+            docs/design/ui-v1/screenshots
+
+  workspace-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Isolated HTTP and persistence smoke
+        run: |
+          docker compose -f compose.workspace.yaml -f compose.workspace-smoke.yaml --env-file config/workspace.env.example build api web
+          docker compose -f compose.workspace.yaml -f compose.workspace-smoke.yaml --env-file config/workspace.env.example up -d --no-build --wait
+          curl --fail http://localhost:3000/login
+          docker compose -f compose.workspace.yaml -f compose.workspace-smoke.yaml --env-file config/workspace.env.example exec -T api python -m scripts.http_container_smoke seed
+          docker compose -f compose.workspace.yaml -f compose.workspace-smoke.yaml --env-file config/workspace.env.example restart api db
+          docker compose -f compose.workspace.yaml -f compose.workspace-smoke.yaml --env-file config/workspace.env.example up -d --no-build --wait
+          docker compose -f compose.workspace.yaml -f compose.workspace-smoke.yaml --env-file config/workspace.env.example exec -T api python -m scripts.http_container_smoke verify
+      - name: Stop disposable preview without deleting volumes
+        if: always()
+        run: docker compose -f compose.workspace.yaml -f compose.workspace-smoke.yaml --env-file config/workspace.env.example down
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 30

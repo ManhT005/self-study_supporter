@@ -39,9 +39,17 @@ POSIX dùng `.venv/bin/`. Native UI cần runtime dependencies và migration; xe
 - [Docker/Ollama/backup](docs/operations/docker.md) và [migrations](docs/operations/migrations.md)
 - [Kết quả refactor](docs/reports/repository-consolidation-acceptance.md)
 - [Evaluation opt-in](evaluation/README.md)
-- [Contract cho frontend tương lai](docs/api/README.md)
+- [HTTP API và frontend contract](docs/api/README.md)
 - [Kế hoạch foundation lịch sử](docs/plans/PHASE_0_ENGINEERING_FOUNDATION.md) và [bằng chứng cũ](docs/reports/p0-acceptance.md)
 
 Không commit env thật, PDF người dùng, dumps hoặc model weights. `down`/`up` giữ
-volume; tránh `down -v` với dữ liệu cần giữ. Next.js/FastAPI/LangGraph và thay đổi
-retrieval thuộc workstream riêng; consolidation không thay schema/model/vector IDs.
+volume; tránh `down -v` với dữ liệu cần giữ. Migration giao diện tái sử dụng core;
+không thay schema/model/vector IDs.
+
+## Next.js learning workspace preview
+
+The document-first UI is in `apps/web`, with a FastAPI adapter in `apps/api`.
+See [startup and validation](docs/operations/learning-workspace.md) and
+[implementation decisions](docs/design/ui-v1/IMPLEMENTATION.md). Use
+`compose.workspace.yaml` for an isolated preview; Streamlit remains available
+until the migration's operational gates pass.
