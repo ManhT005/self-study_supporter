@@ -1,4 +1,4 @@
-from src.auth.session import reset_session_on_logout
+from apps.streamlit_legacy.session import reset_session_on_logout
 
 
 def test_logout_drops_all_user_data_and_future_keys():
@@ -27,7 +27,7 @@ def test_logout_drops_all_user_data_and_future_keys():
 
 
 def test_login_as_b_resets_residual_a_state(monkeypatch):
-    from ui.components import auth
+    from apps.streamlit_legacy.components import auth
 
     state = {"store": "A", "quiz_history": ["A"], "theme_mode": "light"}
 

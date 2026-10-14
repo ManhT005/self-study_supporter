@@ -9,9 +9,9 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install --no-install-recommends -y libgomp1 \
     && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt ./
+COPY requirements/runtime.txt ./requirements/runtime.txt
 RUN python -m pip install --upgrade pip \
-    && python -m pip install -r requirements.txt
+    && python -m pip install -r requirements/runtime.txt
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin study \
     && mkdir -p /app/data /home/study/.cache/huggingface \
     && chown -R study:study /app/data /home/study
@@ -20,4 +20,4 @@ RUN python -m pip install --no-deps ./backend
 USER study
 EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
-CMD ["streamlit", "run", "main.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true"]
+CMD ["python", "-m", "streamlit", "run", "apps/streamlit_legacy/main.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true"]

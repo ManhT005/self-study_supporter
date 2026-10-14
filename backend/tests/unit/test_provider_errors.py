@@ -3,9 +3,12 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from src.llm.errors import ProviderAuthenticationError, ProviderUnavailable
-from src.llm.multi_provider_llm import MultiProviderLLM
-from src.llm.openai_compatible_client import OpenAICompatibleClient, RateLimitError
+from study_supporter.domain.provider_errors import ProviderAuthenticationError, ProviderUnavailable
+from study_supporter.infrastructure.llm.multi_provider_llm import MultiProviderLLM
+from study_supporter.infrastructure.llm.openai_compatible_client import (
+    OpenAICompatibleClient,
+    RateLimitError,
+)
 
 
 @pytest.mark.parametrize(

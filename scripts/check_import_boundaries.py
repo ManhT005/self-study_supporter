@@ -6,15 +6,24 @@ from pathlib import Path
 
 PURE = {"domain", "application", "ai"}
 IO_DRIVERS = {"urllib", "http", "socket", "sqlite3", "subprocess"}
+# Exact deterministic modules only; SDKs/network remain forbidden in every pure layer.
+DETERMINISTIC_IMPORTS = {
+    "study_supporter.domain.documents": {"pydantic"},
+    "study_supporter.domain.knowledge_graph": {"pydantic"},
+    "study_supporter.ai.ingestion.chunking": {"numpy"},
+    "study_supporter.domain.assessment": {"pydantic"},
+    "study_supporter.ai.graph.algorithms": {"networkx"},
+    "study_supporter.ai.assessment.json_parsing": {"pydantic"},
+}
 ALLOWED = {
     "domain": {"domain"},
     "ai": {"ai", "domain"},
     "application": PURE,
-    "infrastructure": PURE | {"infrastructure"},
+    "infrastructure": PURE | {"infrastructure", "config"},
     "orchestration": PURE | {"orchestration"},
     "interfaces": {"interfaces", "application", "domain"},
 }
-# Core is stdlib-only today. Allowing only stdlib catches new SDKs automatically.
+# Pure modules use stdlib plus the exact deterministic dependencies above.
 
 
 def violations(source: str, module: str) -> list[str]:
@@ -42,7 +51,11 @@ def violations(source: str, module: str) -> list[str]:
                     failures.append(f"{module}:{node.lineno}: forbidden layer {target}")
             elif layer in PURE and (
                 root in IO_DRIVERS
-                or (root not in sys.stdlib_module_names and root != "study_supporter")
+                or (
+                    root not in sys.stdlib_module_names
+                    and root != "study_supporter"
+                    and root not in DETERMINISTIC_IMPORTS.get(module, set())
+                )
             ):
                 failures.append(f"{module}:{node.lineno}: forbidden core import {target}")
     return failures

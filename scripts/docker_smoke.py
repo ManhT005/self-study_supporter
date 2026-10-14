@@ -1,135 +1,148 @@
-"""Functional Docker smoke with synthetic PDF, mocked quiz/LLM and 1024D fake vectors."""
+"""Opt-in Docker acceptance through public application services and real storage."""
 
 import argparse
 import json
+import os
 import uuid
 from pathlib import Path
-from unittest.mock import Mock
 
 import fitz
 
-from src.auth.auth_service import authenticate_user, register_user
-from src.db.lifecycle import verify_schema
-from src.documents.document_service import (
-    create_document,
-    get_latest_ready_document,
-    update_document_status,
-)
-from src.rag.pdf_parser import parse_pdf
-from src.rag.chunker import (
-    flatten_pages_to_sentences,
-    compute_distances,
-    compute_breakpoints,
-    group_sentences_into_chunks,
-)
-from src.rag.vector_store import VectorStore
-from src.memory.progress_db import ProgressDB
-from src.memory.long_term import LongTermMemory
-from src.agent.tools.generate_quiz import GenerateQuizTool
-from src.llm.llm_adapter import ChatResponse
-from ui.components.quiz_arena import _parse_quiz_from_text
-from study_supporter.domain.errors import DocumentUnsupported
+from study_supporter.bootstrap import ApplicationFactory
+from study_supporter.config import Settings
+from study_supporter.application.contracts.context import AppContext
+from study_supporter.application.contracts.learning import IngestDocumentRequest, QuizRequest
+from study_supporter.application.contracts.retrieval import RetrievalQuery
+from study_supporter.application.ports.llm import ChatResponse
+from study_supporter.infrastructure.llm.factory import ProviderSelection
+from study_supporter.infrastructure.persistence.chroma.note_repository import LongTermMemory
+from study_supporter.domain.errors import DocumentUnsupported, EvidenceNotFound
 
+# Keep the existing marker readable to prove historical volume compatibility.
 MARKER = Path("data/p0-smoke.json")
 VECTOR = [1.0] + [0.0] * 1023
 
 
-def verify(state):
-    a, b = state["a"], state["b"]
-    assert authenticate_user(state["username"], state["password"]) == a
-    doc = get_latest_ready_document(a)
+class FakeEmbedding:
+    dimension = 1024
+    model_id = "BAAI/bge-m3"
+
+    def embed(self, texts, task_type):
+        return [list(VECTOR) for _ in texts]
+
+
+class FakeLLM:
+    def chat(self, messages, **kwargs):
+        if not kwargs.get("system_prompt"):
+            return ChatResponse(
+                text=json.dumps(
+                    {
+                        "questions": [
+                            {
+                                "question": "Q?",
+                                "options": ["a", "b", "c", "d"],
+                                "correct_answer_index": 1,
+                                "explanation": "fixture",
+                            }
+                        ]
+                    }
+                )
+            )
+        if "Observation:" in messages[-1]["content"]:
+            return ChatResponse(text="Final Answer: First sentence. [fixture.pdf, page 1]")
+        return ChatResponse(
+            text='Action: search_docs\nAction Input: {"query": "First sentence", "top_k": 1}'
+        )
+
+
+def fixture_pdf(blank=False):
+    with fitz.open() as pdf:
+        page = pdf.new_page()
+        if not blank:
+            page.insert_text((72, 72), "First sentence. Second sentence.")
+        return pdf.tobytes()
+
+
+def verify(services, state):
+    a, b = AppContext(str(state["a"])), AppContext(str(state["b"]))
+    assert services.authentication.authenticate(state["username"], state["password"]) == a
+    doc = services.document_repository.latest(a.user_id)
     assert doc and doc["id"] == state["document_id"]
-    assert get_latest_ready_document(b) is None
-    store = VectorStore(collection_name=doc["chroma_collection_name"])
+    assert services.document_repository.latest(b.user_id) is None
+    with_context = AppContext(a.user_id, (str(doc["id"]),))
+    evidence = services.retriever().execute(
+        RetrievalQuery(a.user_id, with_context.active_document_ids, "First", 3)
+    )
+    assert evidence and evidence[0].source == "fixture.pdf"
+    try:
+        services.open_document(b, doc["id"])
+    except EvidenceNotFound:
+        pass
+    else:
+        raise AssertionError("Cross-user document access accepted")
+    session = services.open_document(a, doc["id"])
+    assert session and session.context == with_context
+    answer = session.answer("First sentence?")
+    assert answer.answer and answer.evidences and answer.trace_id
+    assert session.progress()["total_attempts"] == 1
+    assert services.progress_repository.get_summary(b.user_id)["total_attempts"] == 0
+    store = services.vector_store(doc)
     assert store.count() == state["chunk_count"]
-    result = store.documents.query(query_embeddings=[VECTOR], n_results=1)
-    assert result["ids"][0]
-    assert result["metadatas"][0][0]["source"] == "fixture.pdf"
-    progress = ProgressDB()
-    assert progress.get_summary(str(a))["total_attempts"] == 1
-    assert progress.get_summary(str(b))["total_attempts"] == 0
     notes = LongTermMemory(store, lambda _: VECTOR)
-    assert notes.search_notes(str(a), "question") == ["Synthetic note A"]
-    assert notes.search_notes(str(b), "question") == []
+    assert notes.search_notes(a.user_id, "question") == ["Synthetic note A"]
+    assert notes.search_notes(b.user_id, "question") == []
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["seed", "verify"])
     args = parser.parse_args()
-    verify_schema()
-    if args.action == "seed":
-        if MARKER.exists():
-            parser.error("Marker already exists; use verify or a fresh disposable project")
-        suffix = uuid.uuid4().hex[:12]
-        username, password = f"p0-a-{suffix}", uuid.uuid4().hex
-        a = register_user(username, password)
-        b = register_user(f"p0-b-{suffix}", uuid.uuid4().hex)
-        path = Path("data/fixture.pdf")
-        with fitz.open() as pdf:
-            pdf.new_page().insert_text((72, 72), "First sentence. Second sentence.")
-            pdf.save(path)
-        try:
-            pages = parse_pdf(str(path)).pages
-            sentences = flatten_pages_to_sentences(pages)
-            for sentence in sentences:
-                sentence.embedding = VECTOR
-            chunks = group_sentences_into_chunks(
-                sentences, compute_breakpoints(sentences, compute_distances(sentences))
-            )
-        finally:
-            path.unlink(missing_ok=True)
-        doc_id, collection = create_document(a, "fixture.pdf")
-        store = VectorStore(collection_name=collection)
-        store.add_chunks(chunks, [VECTOR for _ in chunks])
-        update_document_status(doc_id, "ready", page_count=1, chunk_count=len(chunks), user_id=a)
-        llm = Mock()
-        llm.chat.return_value = ChatResponse(
-            text=json.dumps(
-                {
-                    "questions": [
-                        {
-                            "question": "Q?",
-                            "options": ["a", "b", "c", "d"],
-                            "correct_answer_index": 1,
-                            "explanation": "fixture",
-                        }
-                    ]
-                }
-            )
-        )
-        quiz = _parse_quiz_from_text(GenerateQuizTool(llm).run(chunks[0].text))
-        assert quiz and quiz[0]["correct_index"] == 1
-        ProgressDB().record_attempt(str(a), "fixture", quiz[0]["question"], True, doc_id)
-        LongTermMemory(store, lambda _: VECTOR).save_note(str(a), "Synthetic note A")
-        with fitz.open() as pdf:
-            pdf.new_page()
-            pdf.save(path)
-        try:
+    with ApplicationFactory(
+        Settings.from_mapping(os.environ),
+        embedding=FakeEmbedding(),
+        provider_factory=lambda settings, mode: ProviderSelection(FakeLLM(), "ollama"),
+    ) as services:
+        services.verify_schema()
+        if args.action == "seed":
+            if MARKER.exists():
+                parser.error("Marker exists; use verify or a fresh disposable project")
+            suffix, password = uuid.uuid4().hex[:12], uuid.uuid4().hex
+            username = f"smoke-a-{suffix}"
+            a = services.authentication.register(username, password)
+            b = services.authentication.register(f"smoke-b-{suffix}", uuid.uuid4().hex)
+            request = IngestDocumentRequest(a, "fixture.pdf", fixture_pdf())
+            events = []
+            result = services.ingestion.execute(request, events.append)
+            assert services.ingestion.execute(request).reused
+            assert events[-1].stage.value == "READY"
+            assert len({event.trace_id for event in events}) == 1
+            session = services.open_document(a, result.document_id)
+            quiz = session.generate_quiz(QuizRequest(session.context, 1, "fixture"))
+            assert len(quiz) == 1 and quiz[0]["correct_index"] == 1
+            assert session.submit_quiz(quiz[0], 1).is_correct
+            session.save_note("Synthetic note A")
             try:
-                parse_pdf(str(path))
+                services.ingestion.execute(IngestDocumentRequest(a, "blank.pdf", fixture_pdf(True)))
             except DocumentUnsupported:
                 pass
             else:
                 raise AssertionError("Blank PDF accepted")
-        finally:
-            path.unlink(missing_ok=True)
-        state = {
-            "a": a,
-            "b": b,
-            "username": username,
-            "password": password,
-            "document_id": doc_id,
-            "chunk_count": len(chunks),
-        }
-        MARKER.write_text(json.dumps(state), encoding="utf-8")
-    else:
-        state = json.loads(MARKER.read_text(encoding="utf-8"))
-    verify(state)
+            state = {
+                "a": int(a.user_id),
+                "b": int(b.user_id),
+                "username": username,
+                "password": password,
+                "document_id": result.document_id,
+                "chunk_count": result.chunk_count,
+            }
+            MARKER.write_text(json.dumps(state), encoding="utf-8")
+        else:
+            state = json.loads(MARKER.read_text(encoding="utf-8"))
+        verify(services, state)
     print(
-        "PASS: SQL/auth, PDF/chunk provenance, persistent Chroma, quiz/progress, A/B ownership and notes"
+        "PASS: canonical auth/ingestion/retrieval/chat/quiz/notes/progress, persisted data and A/B isolation"
     )
-    print("Synthetic embeddings and mocked LLM; BGE/Ollama/browser E2E remain separate checks")
+    print("Synthetic embeddings/LLM; real model and browser checks are separate")
 
 
 if __name__ == "__main__":
