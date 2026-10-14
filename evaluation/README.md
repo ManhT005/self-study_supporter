@@ -25,9 +25,11 @@ framework-independent `AgentResult`, including `RagOnlyAdapter` and
 `LegacyReActAdapter`. Live callbacks must bind identities from approved fixture
 accounts, construct fresh request-scoped tools, isolate history and mutating tools
 between variants/repetitions, pin the same provider/model/document/index, and supply
-an accurate `execution_mode="online"` manifest. V2 has no live CLI or automatic
-fixture provisioning yet; the historical command below remains available. The
-harness checks source/prompt coverage but cannot verify a caller's infrastructure
+an accurate `execution_mode="online"` manifest. An opt-in [live CLI and isolated fixture preparation](live/README.md) now use the
+production pipeline with bounded Gemini requests. Independent [v2 labels](datasets/v2/README.md)
+and external gate approvals remain required for benchmark mode. The historical
+command below remains available. The harness checks source/prompt coverage but
+cannot verify a caller's infrastructure
 declarations or eliminate provider stochasticity. Its seed controls evaluation
 order/bootstrap, not provider sampling.
 
