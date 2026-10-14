@@ -1,0 +1,65 @@
+{
+  "owners": {
+    "doc_a": "user_a",
+    "doc_b": "user_a",
+    "doc_c": "user_b"
+  },
+  "chunks": [
+    {
+      "chunk_id": "math-definition",
+      "document_id": "doc_a",
+      "text": "Đạo hàm đo tốc độ thay đổi của hàm số.",
+      "source": "doc_a.synthetic",
+      "page_start": 1,
+      "page_end": 1
+    },
+    {
+      "chunk_id": "math-power",
+      "document_id": "doc_a",
+      "text": "Đạo hàm của x bình phương là 2x.",
+      "source": "doc_a.synthetic",
+      "page_start": 2,
+      "page_end": 2
+    },
+    {
+      "chunk_id": "math-chain",
+      "document_id": "doc_a",
+      "text": "Quy tắc dây chuyền dùng để tính đạo hàm của hàm hợp.",
+      "source": "doc_a.synthetic",
+      "page_start": 3,
+      "page_end": 3
+    },
+    {
+      "chunk_id": "net-address",
+      "document_id": "doc_b",
+      "text": "Địa chỉ IP định danh thiết bị trong mạng.",
+      "source": "doc_b.synthetic",
+      "page_start": 1,
+      "page_end": 1
+    },
+    {
+      "chunk_id": "net-dns",
+      "document_id": "doc_b",
+      "text": "DNS chuyển tên miền thành địa chỉ IP.",
+      "source": "doc_b.synthetic",
+      "page_start": 2,
+      "page_end": 2
+    },
+    {
+      "chunk_id": "net-tcp",
+      "document_id": "doc_b",
+      "text": "TCP đảm bảo truyền dữ liệu tin cậy theo đúng thứ tự.",
+      "source": "doc_b.synthetic",
+      "page_start": 3,
+      "page_end": 3
+    },
+    {
+      "chunk_id": "security-password",
+      "document_id": "doc_c",
+      "text": "Mật khẩu tổng hợp chỉ dành cho tài khoản user_b.",
+      "source": "doc_c.synthetic",
+      "page_start": 1,
+      "page_end": 1
+    }
+  ]
+}

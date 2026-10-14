@@ -1,6 +1,6 @@
 import json
 import time
-from evaluation.rag_only import answer_with_rag_only
+from evaluation.rag_only import answer_from_chunks
 from study_supporter.infrastructure.retrieval.hybrid_adapter import hybrid_search
 
 
@@ -23,15 +23,13 @@ def run_eval(dataset, store, bm25_index, embed_query_fn, llm, orchestrator, top_
         if category == "personalized":
             history_text = "\n".join(conversation_log[-4:])
 
-        t0 = time.time()
+        t0 = time.perf_counter()
         rag_chunks = hybrid_search(question, store, bm25_index, embed_query_fn, top_k=top_k)
-        rag_answer = answer_with_rag_only(
-            question, store, bm25_index, embed_query_fn, llm, top_k=top_k
-        )
-        t1 = time.time()
+        rag_answer = answer_from_chunks(question, rag_chunks, llm)
+        t1 = time.perf_counter()
 
         state = orchestrator.run(question, conversation_history=history_text)
-        t2 = time.time()
+        t2 = time.perf_counter()
 
         results.append(
             {

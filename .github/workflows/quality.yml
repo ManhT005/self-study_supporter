@@ -28,6 +28,12 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m pytest -q
+      - name: Synthetic agent and evaluation regression
+        run: python -m evaluation.runner_v2 --repetitions 3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-ai-evaluation
+          path: data/evaluations/
       - run: python scripts/check_import_boundaries.py
       - run: python -m build --no-isolation ./backend
       - name: Import built wheel away from repository

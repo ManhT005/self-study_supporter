@@ -6,8 +6,8 @@ import numpy as np
 def compute_summary(judged_results: list[dict]) -> dict:
     summary = {
         "overall": {
-            "rag_only": {"faithfulness": [], "relevance": [], "parse_errors": 0},
-            "agent_rag": {"faithfulness": [], "relevance": [], "parse_errors": 0},
+            "rag_only": {"faithfulness": [], "relevance": [], "parse_errors": 0, "n_total": 0},
+            "agent_rag": {"faithfulness": [], "relevance": [], "parse_errors": 0, "n_total": 0},
         },
         "by_category": {},
     }
@@ -16,15 +16,19 @@ def compute_summary(judged_results: list[dict]) -> dict:
         category = item["category"]
         if category not in summary["by_category"]:
             summary["by_category"][category] = {
-                "rag_only": {"faithfulness": [], "relevance": [], "parse_errors": 0},
-                "agent_rag": {"faithfulness": [], "relevance": [], "parse_errors": 0},
+                "rag_only": {"faithfulness": [], "relevance": [], "parse_errors": 0, "n_total": 0},
+                "agent_rag": {"faithfulness": [], "relevance": [], "parse_errors": 0, "n_total": 0},
             }
 
         for pipeline in ("rag_only", "agent_rag"):
-            score = item[pipeline].get("score")
-            if not score:
-                continue
-            if score["faithfulness"] == 0 and score["relevance"] == 0:
+            summary["overall"][pipeline]["n_total"] += 1
+            summary["by_category"][category][pipeline]["n_total"] += 1
+            score = item.get(pipeline, {}).get("score")
+            valid = isinstance(score, dict) and all(
+                type(score.get(key)) is int and 1 <= score[key] <= 5
+                for key in ("faithfulness", "relevance")
+            )
+            if not valid:
                 summary["overall"][pipeline]["parse_errors"] += 1
                 summary["by_category"][category][pipeline]["parse_errors"] += 1
                 continue  # KHÔNG đưa vào danh sách tính trung bình
@@ -43,6 +47,9 @@ def compute_summary(judged_results: list[dict]) -> dict:
                 "avg_relevance": _avg(vals["relevance"]),
                 "n_scored": len(vals["faithfulness"]),
                 "parse_errors": vals["parse_errors"],
+                "n_total": vals["n_total"],
+                "n_valid": len(vals["faithfulness"]),
+                "n_failed": vals["parse_errors"],
             }
             for pipeline, vals in d.items()
         }

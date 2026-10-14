@@ -32,6 +32,11 @@ def answer_with_rag_only(
         top_k=top_k,
     )
 
+    return answer_from_chunks(question, chunks, llm)
+
+
+def answer_from_chunks(question, chunks, llm: LLMAdapter) -> str:
+    """Shared baseline prompt; adapters can retain the exact retrieval they measured."""
     if not chunks:
         context = "(Không tìm thấy tài liệu liên quan.)"
     else:
