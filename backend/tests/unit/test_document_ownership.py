@@ -2,10 +2,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.db.database import Base
-from src.db.models import Document, QuizAttempt, User
-from src.documents import document_service as documents
-from src.memory.progress_db import ProgressDB
+from study_supporter.infrastructure.persistence.sqlalchemy.database import Base
+from study_supporter.infrastructure.persistence.sqlalchemy.models import Document, QuizAttempt, User
+from study_supporter.infrastructure.persistence.sqlalchemy import document_repository as documents
+from study_supporter.infrastructure.persistence.sqlalchemy.progress_repository import ProgressDB
 from study_supporter.domain.errors import EvidenceNotFound
 
 

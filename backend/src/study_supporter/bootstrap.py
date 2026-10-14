@@ -1,4 +1,4 @@
-"""Explicit core composition; legacy infrastructure is wired by the UI adapter."""
+"""Explicit application composition and process resource lifecycle."""
 
 from threading import RLock
 
@@ -44,9 +44,10 @@ class SharedEmbedding:
 class ApplicationFactory:
     """Process resources only. Account-bound tools are created for each session later."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, *, embedding=None, provider_factory=None):
         self.settings = settings
-        self.embedding = SharedEmbedding(settings)
+        self.embedding = embedding if embedding is not None else SharedEmbedding(settings)
+        self._provider_factory = provider_factory
         from study_supporter.infrastructure.persistence.sqlalchemy.database import Database
         from study_supporter.infrastructure.persistence.sqlalchemy.repositories import (
             DocumentRepository,
@@ -77,7 +78,12 @@ class ApplicationFactory:
     def vector_store(self, document):
         from study_supporter.infrastructure.persistence.chroma.vector_store import VectorStore
 
-        return VectorStore(self.settings.chroma_path, document["chroma_collection_name"])
+        return VectorStore(
+            self.settings.chroma_path,
+            document["chroma_collection_name"],
+            host=self.settings.chroma_host,
+            port=self.settings.chroma_port,
+        )
 
     def retriever(self):
         from study_supporter.infrastructure.retrieval.scoped_retriever import ScopedHybridRetriever
@@ -104,7 +110,7 @@ class ApplicationFactory:
     def provider(self, mode="auto"):
         from study_supporter.infrastructure.llm.factory import select_provider
 
-        return select_provider(self.settings, mode)
+        return (self._provider_factory or select_provider)(self.settings, mode)
 
     def open_document(self, context, document_id=None, mode="auto"):
         from study_supporter.application.contracts.context import AppContext
@@ -160,6 +166,7 @@ class ApplicationFactory:
             progress,
             self.document_repository,
             selection.client,
+            notes=notes,
             mode=selection.mode,
             notice=selection.notice,
         )

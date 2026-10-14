@@ -1,1 +1,0 @@
-from apps.streamlit_legacy.session import reset_session_on_logout as reset_session_on_logout

@@ -18,6 +18,7 @@ def render_chat():
         for msg in st.session_state.chat_history:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
+                _render_sources(msg.get("evidences", ()))
     else:
         st.markdown("_Nhập câu hỏi để bắt đầu cuộc hội thoại._")
 
@@ -64,17 +65,18 @@ def _handle_message(user_question: str) -> None:
                 return
 
         st.markdown(result.answer)
-        evidence = result.evidences
-        sources = [
-            f"{item.source} · trang {item.page_start}-{item.page_end} · {item.chunk_id}"
-            for item in evidence
-        ]
-        chip_html = "".join(
-            f"<span class='chip'>{html.escape(source)}</span>" for source in sources
-        )
-        st.markdown(
-            f"<div style='margin-top:0.45rem;'>{chip_html}</div>",
-            unsafe_allow_html=True,
-        )
+        _render_sources(result.evidences)
 
-    st.session_state.chat_history.append({"role": "assistant", "content": result.answer})
+    st.session_state.chat_history.append(
+        {"role": "assistant", "content": result.answer, "evidences": result.evidences}
+    )
+
+
+def _render_sources(evidences):
+    sources = [
+        f"{item.source} · trang {item.page_start}-{item.page_end} · {item.chunk_id}"
+        for item in evidences
+    ]
+    if sources:
+        chips = "".join(f"<span class='chip'>{html.escape(source)}</span>" for source in sources)
+        st.markdown(f"<div style='margin-top:0.45rem;'>{chips}</div>", unsafe_allow_html=True)

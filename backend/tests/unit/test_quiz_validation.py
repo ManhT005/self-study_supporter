@@ -1,8 +1,10 @@
 import pytest
 from pydantic import ValidationError
 
-from src.agent.tools.generate_quiz import QuizQuestion
-from ui.components.quiz_arena import _parse_quiz_from_text
+from study_supporter.orchestration.legacy_react.tools.generate_quiz import QuizQuestion
+from study_supporter.ai.assessment.legacy_parser import (
+    parse_quiz_from_text as _parse_quiz_from_text,
+)
 
 
 @pytest.mark.parametrize("answer", [None, -1, 4, True, "1"])

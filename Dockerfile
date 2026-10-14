@@ -9,9 +9,9 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install --no-install-recommends -y libgomp1 \
     && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt ./
+COPY requirements/runtime.txt ./requirements/runtime.txt
 RUN python -m pip install --upgrade pip \
-    && python -m pip install -r requirements.txt
+    && python -m pip install -r requirements/runtime.txt
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin study \
     && mkdir -p /app/data /home/study/.cache/huggingface \
     && chown -R study:study /app/data /home/study

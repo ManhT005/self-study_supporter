@@ -39,6 +39,9 @@ _venv/
 # Tuyệt đối không đẩy file chứa API Keys lên Git
 .env
 .env.local
+.env.*
+*.env
+!*.env.example
 secrets.toml
 config.ini
 

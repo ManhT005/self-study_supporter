@@ -20,12 +20,14 @@ class LearningSession:
         progress,
         documents,
         llm,
+        notes=None,
         mode="auto",
         notice="",
     ):
         self.context, self.document, self.chunks = context, document, tuple(chunks)
         self._answer, self._generator, self._submit = answer, generator, submit
         self._progress, self._documents, self._llm = progress, documents, llm
+        self._notes = notes
         self.mode, self.notice = mode, notice
         self.graph = (
             ConceptGraph(**document["concept_graph_json"])
@@ -64,6 +66,9 @@ class LearningSession:
 
     def progress(self):
         return self._progress.execute(self.context)
+
+    def save_note(self, note):
+        return self._notes.execute(self.context, note)
 
     def build_graph(self):
         self._documents.get(self.context.user_id, self.document["id"])
