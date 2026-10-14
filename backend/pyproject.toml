@@ -7,11 +7,10 @@ name = "study-supporter"
 version = "0.0.0"
 description = "Framework-independent core of Self Study Supporter"
 requires-python = ">=3.11,<3.13"
-dependencies = ["numpy==1.26.4", "pydantic==2.10.4", "networkx==3.4.2"]
+dependencies = []
 
 [project.optional-dependencies]
-dev = ['pytest==8.3.4', 'ruff==0.9.10', 'build==1.2.2.post1', 'setuptools==75.6.0', 'wheel==0.45.1', 'requests==2.32.5', 'sqlalchemy==2.0.36', 'streamlit==1.41.1', 'pymupdf==1.25.1', 'python-dotenv==1.0.1', 'bcrypt==4.2.1', 'alembic==1.14.0', 'psycopg2-binary==2.9.10', 'google-genai==1.56.0', 'rank-bm25==0.2.2']
-runtime = ['google-genai==1.56.0', 'python-dotenv==1.0.1', 'pymupdf==1.25.1', 'chromadb==0.5.23', 'posthog==3.7.0', 'rank-bm25==0.2.2', 'sentence-transformers==3.3.1', 'transformers==4.46.3', 'torch==2.5.1', 'sqlalchemy==2.0.36', 'streamlit==1.41.1', 'requests==2.32.5', 'bcrypt==4.2.1', 'psycopg2-binary==2.9.10', 'alembic==1.14.0']
+dev = ["pytest==8.3.4", "ruff==0.9.10", "build==1.2.2.post1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
