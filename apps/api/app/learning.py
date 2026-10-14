@@ -27,15 +27,12 @@ from study_supporter.ai.graph.algorithms import detect_cycles
 from study_supporter.application.contracts.learning import IngestDocumentRequest, QuizRequest
 from study_supporter.application.use_cases.learning import GetProgressUseCase, SubmitQuizUseCase
 from study_supporter.domain.assessment import QuizQuestion
-from study_supporter.domain.errors import EvidenceNotFound
 from study_supporter.domain.upload_validation import MAX_PDF_BYTES, validate_pdf_upload
 
 
 def install_learning(app, principal):
     router = APIRouter(prefix="/api/v1")
     upload_slot = BoundedSemaphore(1)
-    # Provider/model calls are bounded independently of lightweight read/auth requests.
-    ai_slots = BoundedSemaphore(2)
     app.state.quizzes = Quizzes()
 
     def dto(document):
@@ -45,23 +42,7 @@ def install_learning(app, principal):
         return request.app.state.factory.documents.get(user.context, document_id)
 
     def session(request, user, document_id, mode="auto"):
-        document = owned(request, user, document_id)
-        if document["status"] != "ready":
-            raise HTTPException(
-                409, "Tài liệu chưa sẵn sàng để học. Kiểm tra trạng thái trong thư viện."
-            )
-        result = request.app.state.factory.open_document(user.context, document_id, mode)
-        if result is None:
-            raise EvidenceNotFound("Document content unavailable")
-        return result
-
-    def call_ai(callback):
-        if not ai_slots.acquire(blocking=False):
-            raise HTTPException(429, "AI đang bận. Vui lòng thử lại sau.")
-        try:
-            return callback()
-        finally:
-            ai_slots.release()
+        return request.app.state.learning.open(user.context, document_id, mode)
 
     @router.get("/documents", response_model=list[DocumentDTO])
     def documents(request: Request, user=Depends(principal)):
@@ -114,7 +95,7 @@ def install_learning(app, principal):
                 trace_id=result.trace_id,
             )
 
-        return call_ai(answer)
+        return request.app.state.learning.call_ai(answer)
 
     @router.post("/documents/{document_id}/quizzes", response_model=QuizDTO)
     def generate(document_id: int, body: QuizSetup, request: Request, user=Depends(principal)):
@@ -146,7 +127,7 @@ def install_learning(app, principal):
             key = app.state.quizzes.create(user.session_key, document_id, questions)
             return QuizDTO(quiz_id=key, questions=public)
 
-        return call_ai(quiz)
+        return request.app.state.learning.call_ai(quiz)
 
     @router.post("/documents/{document_id}/quizzes/{quiz_id}/attempts", response_model=GradeDTO)
     def submit(
@@ -201,13 +182,15 @@ def install_learning(app, principal):
             graph, concepts = session(request, user, document_id, body.mode).build_graph()
             return PathDTO(concepts=concepts, has_cycle=bool(detect_cycles(graph)))
 
-        return call_ai(build)
+        return request.app.state.learning.call_ai(build)
 
     @router.post("/documents/{document_id}/notes", response_model=MessageDTO, status_code=201)
     def note(document_id: int, body: NoteRequest, request: Request, user=Depends(principal)):
         if not body.note.strip():
             raise HTTPException(422, "Ghi chú không được để trống.")
-        call_ai(lambda: session(request, user, document_id).save_note(body.note.strip()))
+        request.app.state.learning.call_ai(
+            lambda: session(request, user, document_id).save_note(body.note.strip())
+        )
         return MessageDTO(message="Đã lưu ghi chú.")
 
     app.include_router(router)

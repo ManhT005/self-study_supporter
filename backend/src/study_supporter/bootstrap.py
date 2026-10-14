@@ -3,6 +3,10 @@
 from threading import RLock
 
 from study_supporter.config import Settings
+from study_supporter.application.contracts.context import AppContext
+from study_supporter.application.ports.agent import AgentFactory, AgentToolsFactory
+from study_supporter.application.ports.llm import LLMAdapter
+from study_supporter.application.use_cases.answer_question import AnswerQuestionUseCase
 
 from study_supporter.application.ports.retrieval import (
     DocumentAccessPort,
@@ -44,10 +48,18 @@ class SharedEmbedding:
 class ApplicationFactory:
     """Process resources only. Account-bound tools are created for each session later."""
 
-    def __init__(self, settings: Settings, *, embedding=None, provider_factory=None):
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        embedding=None,
+        provider_factory=None,
+        agent_factory: AgentFactory | None = None,
+    ):
         self.settings = settings
         self.embedding = embedding if embedding is not None else SharedEmbedding(settings)
         self._provider_factory = provider_factory
+        self._agent_factory = agent_factory
         from study_supporter.infrastructure.persistence.sqlalchemy.database import Database
         from study_supporter.infrastructure.persistence.sqlalchemy.repositories import (
             DocumentRepository,
@@ -112,9 +124,18 @@ class ApplicationFactory:
 
         return (self._provider_factory or select_provider)(self.settings, mode)
 
+    def answer_service(
+        self, context: AppContext, llm: LLMAdapter, tools_factory: AgentToolsFactory
+    ) -> AnswerQuestionUseCase:
+        from study_supporter.orchestration.legacy_react.adapter import LegacyReActAdapter
+
+        agent = (self._agent_factory or LegacyReActAdapter)(
+            context, llm, self.retriever(), tools_factory
+        )
+        return AnswerQuestionUseCase(agent, context)
+
     def open_document(self, context, document_id=None, mode="auto"):
         from study_supporter.application.contracts.context import AppContext
-        from study_supporter.application.use_cases.answer_question import AnswerQuestionUseCase
         from study_supporter.application.use_cases.learning import (
             SubmitQuizUseCase,
             GetProgressUseCase,
@@ -122,10 +143,6 @@ class ApplicationFactory:
         )
         from study_supporter.application.use_cases.session import LearningSession
         from study_supporter.infrastructure.persistence.chroma.note_repository import LongTermMemory
-        from study_supporter.orchestration.legacy_react.orchestrator import ReActOrchestrator
-        from study_supporter.orchestration.legacy_react.tools.retrieve_evidence import (
-            RetrieveEvidenceTool,
-        )
         from study_supporter.orchestration.legacy_react.tools.generate_quiz import GenerateQuizTool
         from study_supporter.orchestration.legacy_react.tools.save_note import SaveNoteTool
         from study_supporter.orchestration.legacy_react.tools.get_progress import GetProgressTool
@@ -143,24 +160,24 @@ class ApplicationFactory:
             return None
         context = AppContext(context.user_id, (str(document["id"]),))
         selection = self.provider(mode)
-        search = RetrieveEvidenceTool(self.retriever(), context)
         generator = GenerateQuizTool(selection.client)
         notes = SaveNoteUseCase(
             LongTermMemory(store, lambda query: self.embedding.embed([query], "RETRIEVAL_QUERY")[0])
         )
         progress = GetProgressUseCase(self.progress_repository)
-        tools = [
-            search,
-            generator,
-            SaveNoteTool(notes, context.user_id),
-            GetProgressTool(progress, context.user_id),
-        ]
-        runner = ReActOrchestrator(selection.client, tools)
+
+        def tools_factory():
+            return [
+                GenerateQuizTool(selection.client),
+                SaveNoteTool(notes, context.user_id),
+                GetProgressTool(progress, context.user_id),
+            ]
+
         return LearningSession(
             context,
             document,
             chunks,
-            AnswerQuestionUseCase(runner, search),
+            self.answer_service(context, selection.client, tools_factory),
             generator,
             SubmitQuizUseCase(self.document_repository, self.progress_repository),
             progress,

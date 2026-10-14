@@ -8,6 +8,10 @@ class RetrieverPort(Protocol):
     def retrieve(self, query: RetrievalQuery) -> Sequence[Evidence]: ...
 
 
+class EvidenceRetrievalPort(Protocol):
+    def execute(self, query: RetrievalQuery) -> Sequence[Evidence]: ...
+
+
 class DocumentAccessPort(Protocol):
     def owns(self, user_id: str, document_id: str) -> bool: ...
 

@@ -113,3 +113,48 @@ def test_startup_recovers_processing_and_cyclic_graph_falls_back(http):
         "concepts": [],
         "has_cycle": True,
     }
+
+
+def test_agent_can_be_swapped_at_composition_without_changing_http_contract(http, monkeypatch):
+    from study_supporter.application.contracts.agent import AgentResult
+    from study_supporter.application.contracts.retrieval import RetrievalQuery
+
+    class Agent:
+        def __init__(self, context, llm, retriever, tools_factory):
+            self.context, self.retriever = context, retriever
+
+        def execute(self, request):
+            evidence = tuple(
+                self.retriever.execute(
+                    RetrievalQuery(
+                        self.context.user_id, self.context.active_document_ids, request.question
+                    )
+                )
+            )
+            return AgentResult("alternate adapter answer", evidence, "alternate-trace")
+
+    client, factory = http
+    monkeypatch.setattr(factory, "_agent_factory", Agent)
+    doc = upload(client).json()
+    answer = client.post(
+        f"/api/v1/documents/{doc['id']}/chat", json={"question": "First sentence?"}
+    )
+    assert answer.status_code == 200
+    assert set(answer.json()) == {"answer", "citations", "trace_id"}
+    assert answer.json()["answer"] == "alternate adapter answer"
+    assert answer.json()["trace_id"] == "alternate-trace"
+    assert answer.json()["citations"][0]["document_id"] == str(doc["id"])
+
+
+def test_ai_dispatch_releases_admission_slot_after_failure():
+    from apps.api.app.learning_services import LearningServices
+
+    services = LearningServices(None)
+
+    def fail():
+        raise QuotaExceeded("fixture")
+
+    for _ in range(3):
+        with pytest.raises(QuotaExceeded):
+            services.call_ai(fail)
+    assert services.call_ai(lambda: "success") == "success"
