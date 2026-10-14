@@ -100,3 +100,11 @@ agent/sprint3_notes.md
 # Docker local secrets
 .env.docker
 .env.docker.local
+
+# Next.js and browser test outputs
+node_modules/
+.next/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.test-tmp/
