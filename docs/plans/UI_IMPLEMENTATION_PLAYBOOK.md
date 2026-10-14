@@ -1,9 +1,9 @@
 # UI Implementation Playbook — Self Study Supporter
 
 - **Mục đích:** hướng dẫn người phát triển tự triển khai giao diện mới dựa trên sketch đã tạo, theo từng bước có thể kiểm chứng.
-- **Repository:** \`ManhT005/self-study_supporter\`
-- **Nhánh làm việc:** \`feature/ui-learning-workspace\`
-- **Base:** nhánh kế hoạch \`docs/nextjs-fastapi-migration-plan\`, xuất phát từ \`develop\`; không làm trên \`main\`.
+- **Repository:** `ManhT005/self-study_supporter`
+- **Nhánh làm việc:** `feature/ui-learning-workspace`
+- **Base:** nhánh kế hoạch `docs/nextjs-fastapi-migration-plan`, xuất phát từ `develop`; không làm trên `main`.
 - **Trạng thái:** execution plan — chưa phải bằng chứng rằng Next.js/FastAPI đã được triển khai.
 - **Tài liệu kiến trúc tổng thể:** [FRONTEND_MIGRATION_NEXTJS_FASTAPI.md](./FRONTEND_MIGRATION_NEXTJS_FASTAPI.md)
 
@@ -28,15 +28,15 @@ Kết quả cuối cần có:
 
 ### Bộ sketch đã tạo
 
-Các file dưới đây được tạo ở cuộc trao đổi thiết kế trước. Chúng chưa nằm trong cây file của nhánh \`develop\` tại thời điểm lập kế hoạch; trước khi triển khai UI, hãy lưu/copy chúng vào repository để team và CI review được cùng một nguồn tham chiếu.
+Các file dưới đây được tạo ở cuộc trao đổi thiết kế trước. Chúng chưa nằm trong cây file của nhánh `develop` tại thời điểm lập kế hoạch; trước khi triển khai UI, hãy lưu/copy chúng vào repository để team và CI review được cùng một nguồn tham chiếu.
 
 Đề xuất lưu thành:
 
-- \`docs/design/ui-v1/assets/SELF_STUDY_SUPPORTER_UI_DESIGN_BOARD.png\`
-- \`docs/design/ui-v1/assets/SELF_STUDY_SUPPORTER_MOBILE_WIREFRAMES.png\`
-- \`docs/design/ui-v1/MASTER_PLAN.md\` — bản design master plan nếu muốn version-control toàn bộ đặc tả thiết kế.
+- `docs/design/ui-v1/assets/SELF_STUDY_SUPPORTER_UI_DESIGN_BOARD.png`
+- `docs/design/ui-v1/assets/SELF_STUDY_SUPPORTER_MOBILE_WIREFRAMES.png`
+- `docs/design/ui-v1/MASTER_PLAN.md` — bản design master plan nếu muốn version-control toàn bộ đặc tả thiết kế.
 
-Nguồn tham chiếu ban đầu: \`SELF_STUDY_SUPPORTER_UI_DESIGN_BOARD.png\`, \`SELF_STUDY_SUPPORTER_MOBILE_WIREFRAMES.png\` và \`SELF_STUDY_SUPPORTER_UI_UX_V1_MASTER_PLAN.md\` trong các file đã tạo ở cuộc trò chuyện trước. Không thay các sketch này bằng ảnh minh họa mới nếu chưa có quyết định thiết kế mới.
+Nguồn tham chiếu ban đầu: `SELF_STUDY_SUPPORTER_UI_DESIGN_BOARD.png`, `SELF_STUDY_SUPPORTER_MOBILE_WIREFRAMES.png` và `SELF_STUDY_SUPPORTER_UI_UX_V1_MASTER_PLAN.md` trong các file đã tạo ở cuộc trò chuyện trước. Không thay các sketch này bằng ảnh minh họa mới nếu chưa có quyết định thiết kế mới.
 
 ### Cách đọc sketch
 
@@ -58,7 +58,7 @@ Nguồn tham chiếu ban đầu: \`SELF_STUDY_SUPPORTER_UI_DESIGN_BOARD.png\`, \
 
 Dùng token tập trung, không hard-code màu/radius/spacing khác nhau trong từng trang. Token cụ thể có thể được điều chỉnh sau khi so với sketch:
 
-- Primary: blue gần \`#2563eb\`; ink: navy gần \`#0f172a\`; background: \`#f8fafc\`; border: \`#e2e8f0\`.
+- Primary: blue gần `#2563eb`; ink: navy gần `#0f172a`; background: `#f8fafc`; border: `#e2e8f0`.
 - Card radius khoảng 16px; control radius khoảng 10px.
 - Khoảng cách dựa trên bội số 4px.
 - Light theme trước; chỉ thêm dark theme sau khi component/tokens hoạt động thống nhất.
@@ -66,27 +66,27 @@ Dùng token tập trung, không hard-code màu/radius/spacing khác nhau trong t
 
 ## 3. Kiểm tra baseline trước khi viết code
 
-Repository hiện tại đã có core/application layer, Streamlit adapter, PostgreSQL/SQLAlchemy, Chroma và CI. Nhưng FastAPI runtime và Next.js app chưa tồn tại như sản phẩm chạy được; \`docs/api/openapi.yaml\` hiện chỉ là **proposal cho retrieval**, không phải API đã triển khai.
+Repository hiện tại đã có core/application layer, Streamlit adapter, PostgreSQL/SQLAlchemy, Chroma và CI. Nhưng FastAPI runtime và Next.js app chưa tồn tại như sản phẩm chạy được; `docs/api/openapi.yaml` hiện chỉ là **proposal cho retrieval**, không phải API đã triển khai.
 
 Các đường dẫn cần đọc trước khi sửa:
 
-- Core composition/lifecycle: \`backend/src/study_supporter/bootstrap.py\`
-- Auth use case: \`backend/src/study_supporter/application/use_cases/authenticate.py\`
-- Document ownership: \`backend/src/study_supporter/application/use_cases/documents.py\`
-- Ingestion: \`backend/src/study_supporter/application/use_cases/ingest_document.py\`
-- Answer/chat: \`backend/src/study_supporter/application/use_cases/answer_question.py\`
-- Quiz/progress: \`backend/src/study_supporter/application/use_cases/generate_quiz.py\`, \`backend/src/study_supporter/application/use_cases/learning.py\`
-- Streamlit bridge và màn hình hiện có: \`apps/streamlit_legacy/application_bridge.py\`, \`apps/streamlit_legacy/main.py\`, \`apps/streamlit_legacy/router.py\`, \`apps/streamlit_legacy/components/\`
-- API proposal: \`docs/api/README.md\`, \`docs/api/openapi.yaml\`
-- Compose/Docker: \`compose.yaml\`, \`Dockerfile\`
-- Migration: \`backend/alembic.ini\`, \`backend/migrations/\`
-- CI: \`.github/workflows/quality.yml\`
+- Core composition/lifecycle: `backend/src/study_supporter/bootstrap.py`
+- Auth use case: `backend/src/study_supporter/application/use_cases/authenticate.py`
+- Document ownership: `backend/src/study_supporter/application/use_cases/documents.py`
+- Ingestion: `backend/src/study_supporter/application/use_cases/ingest_document.py`
+- Answer/chat: `backend/src/study_supporter/application/use_cases/answer_question.py`
+- Quiz/progress: `backend/src/study_supporter/application/use_cases/generate_quiz.py`, `backend/src/study_supporter/application/use_cases/learning.py`
+- Streamlit bridge và màn hình hiện có: `apps/streamlit_legacy/application_bridge.py`, `apps/streamlit_legacy/main.py`, `apps/streamlit_legacy/router.py`, `apps/streamlit_legacy/components/`
+- API proposal: `docs/api/README.md`, `docs/api/openapi.yaml`
+- Compose/Docker: `compose.yaml`, `Dockerfile`
+- Migration: `backend/alembic.ini`, `backend/migrations/`
+- CI: `.github/workflows/quality.yml`
 
 ### Baseline commands — Windows PowerShell
 
 Chạy từ thư mục gốc repository. Giữ lại output/test failure để so sánh sau từng phase.
 
-\`\`\`powershell
+```powershell
 git status --short
 git branch --show-current
 git log --oneline -5
@@ -98,34 +98,34 @@ python -m venv .venv
 .venv/Scripts/ruff check .
 .venv/Scripts/ruff format --check .
 .venv/Scripts/python scripts/check_import_boundaries.py
-\`\`\`
+```
 
-Nếu môi trường đã có \`.venv\`, không cần tạo lại. Nếu một lệnh baseline đỏ, xác định đó là lỗi tồn tại từ trước hay lỗi do thay đổi mới; không xóa/skip test để làm xanh giả.
+Nếu môi trường đã có `.venv`, không cần tạo lại. Nếu một lệnh baseline đỏ, xác định đó là lỗi tồn tại từ trước hay lỗi do thay đổi mới; không xóa/skip test để làm xanh giả.
 
 ### Thao tác lấy nhánh
 
 Nếu clone chưa có nhánh local:
 
-\`\`\`powershell
+```powershell
 git fetch origin
 git switch --track origin/feature/ui-learning-workspace
 git status --short
-\`\`\`
+```
 
 Nếu đã có nhánh local:
 
-\`\`\`powershell
+```powershell
 git switch feature/ui-learning-workspace
 git pull --ff-only
-\`\`\`
+```
 
-Không chạy \`git reset --hard\`, \`docker compose down -v\` hoặc xóa volume dữ liệu trong migration này.
+Không chạy `git reset --hard`, `docker compose down -v` hoặc xóa volume dữ liệu trong migration này.
 
 ## 4. Thực tế hiện trạng phải giữ đúng
 
 ### Core có thể tái sử dụng
 
-- \`ApplicationFactory\` quản lý resource process-scoped.
+- `ApplicationFactory` quản lý resource process-scoped.
 - Application layer đã có use case cho authentication, documents, ingestion, answer/retrieval, quiz submission và progress.
 - Document hiện có ownership theo user và trạng thái processing/ready/failed.
 - Ingestion hiện là use case synchronous có callback progress; chưa được mặc định coi là durable background job.
@@ -137,7 +137,7 @@ Không chạy \`git reset --hard\`, \`docker compose down -v\` hoặc xóa volum
 1. **Course chưa được xác nhận là domain resource persisted.** Schema hiện tại có User, Document và QuizAttempt; không tự giả định đã có bảng Course. Trước khi làm CRUD môn học thật, chốt một lựa chọn:
    - **MVP khuyến nghị:** vertical slice đầu dùng document workspace, dùng navigation “Môn học” như hướng IA nhưng không tạo dữ liệu course giả; hoặc
    - tạo Course aggregate/schema bằng ADR + Alembic migration + test ownership riêng. Đây là thay đổi domain/data, không được lén nhét vào PR giao diện.
-2. **Không có FastAPI session chỉ vì có Authentication use case.** Core auth trả \`AppContext\`; API phải bổ sung HTTP session/auth adapter.
+2. **Không có FastAPI session chỉ vì có Authentication use case.** Core auth trả `AppContext`; API phải bổ sung HTTP session/auth adapter.
 3. **Không có job queue bền vững chỉ vì có progress callback.** Chốt ingestion dispatch, status polling và restart recovery trước khi UI hứa progress.
 4. **Không chạy Streamlit và API cùng ghi vào một Chroma persistence path** nếu chưa xác minh multi-process safety. Dùng bản sao dữ liệu hoặc một writer duy nhất trong dual-run.
 5. **Không đổi model embedding/vector dimension, collection naming, chunk IDs hoặc database volume** trong quá trình chuyển UI.
@@ -148,7 +148,7 @@ Không chạy \`git reset --hard\`, \`docker compose down -v\` hoặc xóa volum
 
 Giữ core framework-independent. Đề xuất cấu trúc thêm mới:
 
-\`\`\`text
+```text
 apps/
   api/
     app/
@@ -207,18 +207,18 @@ docs/
     ui-v1/
       assets/
       MASTER_PLAN.md
-\`\`\`
+```
 
 Đây là target layout, không phải yêu cầu phải tạo mọi file ngay ở commit đầu. Nếu repository đang có quy ước khác hợp lý, giữ nhất quán và cập nhật tài liệu thay vì tạo hai cấu trúc song song.
 
 ### Ranh giới module
 
-- \`apps/web\`: presentation, routing, form state, loading/error/empty state.
-- \`apps/api\`: HTTP, auth/session, DTO validation, status/error mapping, request ID.
-- \`backend/src/study_supporter\`: domain, use cases, AI/RAG, ports/adapters nghiệp vụ hiện tại.
+- `apps/web`: presentation, routing, form state, loading/error/empty state.
+- `apps/api`: HTTP, auth/session, DTO validation, status/error mapping, request ID.
+- `backend/src/study_supporter`: domain, use cases, AI/RAG, ports/adapters nghiệp vụ hiện tại.
 - Không import FastAPI/Next.js vào core.
 - API route gọi use case/facade có sẵn qua composition root; không gọi ORM/Chroma trực tiếp trong route.
-- Không cache \`LearningSession\` theo biến global. Resource process-scoped có thể shared; session/tool/conversation phải scoped theo principal và document.
+- Không cache `LearningSession` theo biến global. Resource process-scoped có thể shared; session/tool/conversation phải scoped theo principal và document.
 
 ## 6. Stack và quy ước frontend
 
@@ -229,43 +229,43 @@ Chọn một stack duy nhất, không tạo nhiều app thử nghiệm song song
 - Zod cho parse/validate dữ liệu đầu vào ở frontend.
 - TanStack Query cho server state khi bắt đầu tích hợp API; không dùng Zustand/Redux chỉ để chứa dữ liệu có thể lấy lại từ server.
 - Vitest + Testing Library cho component/logic tests; Playwright cho E2E khi vertical slice đã ổn định.
-- Node LTS được Next.js hỗ trợ; pin version trong \`.nvmrc\`/tooling và CI. Giữ một package manager và một lockfile.
-- Không để API secret trong \`NEXT_PUBLIC_*\`; mọi biến public đều được coi là có thể đọc từ browser.
+- Node LTS được Next.js hỗ trợ; pin version trong `.nvmrc`/tooling và CI. Giữ một package manager và một lockfile.
+- Không để API secret trong `NEXT_PUBLIC_*`; mọi biến public đều được coi là có thể đọc từ browser.
 
 Tạo app từ repository root:
 
-\`\`\`powershell
+```powershell
 npx create-next-app@latest apps/web --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm
 Set-Location apps/web
 npm run dev
-\`\`\`
+```
 
 Nếu CLI thay đổi option ở phiên bản bạn cài, dùng option tương đương nhưng giữ App Router, TypeScript, Tailwind và ESLint. Ghi lại Node/Next versions trong PR.
 
 Các scripts frontend tối thiểu cần có sau khi scaffold:
 
-- \`dev\`
-- \`lint\`
-- \`typecheck\`
-- \`test\`
-- \`build\`
+- `dev`
+- `lint`
+- `typecheck`
+- `test`
+- `build`
 
 Không thêm script giả chạy thành công mà không thực thi test thực.
 
 ## 7. Phase 0 — Chốt scope, sketch assets và contract
 
-**Commit gợi ý:** \`docs(ui): freeze UI routes and sketch references\`
+**Commit gợi ý:** `docs(ui): freeze UI routes and sketch references`
 
 ### Việc cần làm
 
-- [ ] Tạo thư mục \`docs/design/ui-v1/assets/\` và đưa hai ảnh sketch vào đó.
+- [ ] Tạo thư mục `docs/design/ui-v1/assets/` và đưa hai ảnh sketch vào đó.
 - [ ] Đưa design master plan vào repository nếu muốn review cùng code.
 - [ ] Viết inventory ngắn: hành vi Streamlit nào phải giữ, use case nào hỗ trợ, test nào chứng minh.
 - [ ] Quyết định Course domain: document-first MVP hay schema Course riêng.
 - [ ] Chốt auth transport/session, CSRF/Origin, cookie flags và expiry.
 - [ ] Chốt ingestion response/status/retry/restart semantics.
 - [ ] Chốt chat response: synchronous hay SSE; nếu SSE, định nghĩa event schema và reconnect/cancel.
-- [ ] Mở rộng \`docs/api/openapi.yaml\` trước hoặc cùng implementation; đánh dấu rõ proposal vs endpoint đã chạy.
+- [ ] Mở rộng `docs/api/openapi.yaml` trước hoặc cùng implementation; đánh dấu rõ proposal vs endpoint đã chạy.
 - [ ] Ghi rõ feature nào sẽ defer; không thêm tính năng ngoài feature parity mà chưa duyệt.
 
 ### Output phải có
@@ -282,14 +282,14 @@ Không bắt đầu API/UI feature integration nếu còn mơ hồ về ownershi
 
 ## 8. Phase 1 — Frontend foundation và design system
 
-**Commit gợi ý:** \`feat(web): scaffold responsive learning workspace\`
+**Commit gợi ý:** `feat(web): scaffold responsive learning workspace`
 
 ### Công việc theo thứ tự
 
-1. Scaffold \`apps/web\`; xác nhận \`npm run dev\`, lint, typecheck và production build.
+1. Scaffold `apps/web`; xác nhận `npm run dev`, lint, typecheck và production build.
 2. Thiết lập font, CSS reset, design tokens và light theme.
 3. Tạo primitive components: Button, Input, Textarea, Select, Tabs, Dialog, Sheet, Badge, Progress, Skeleton, Toast, EmptyState, ErrorState, Breadcrumb.
-4. Tạo \`NavigationShell\`: desktop sidebar, mobile bottom nav, main content width và responsive breakpoint.
+4. Tạo `NavigationShell`: desktop sidebar, mobile bottom nav, main content width và responsive breakpoint.
 5. Tạo authenticated shell placeholder, avatar/settings entry, page title/breadcrumb và sign-out action placeholder.
 6. Tạo reusable states: loading, empty, error, permission denied, offline/reconnect.
 7. Thêm component tests cho navigation active state, mobile nav, button disabled/pending và error display.
@@ -310,16 +310,16 @@ Không làm chatbot thật, upload thật, database mới hay API auth giả. D�
 
 ## 9. Phase 2 — FastAPI runtime và authentication
 
-**Commit gợi ý:** \`feat(api): add FastAPI runtime and session auth\`
+**Commit gợi ý:** `feat(api): add FastAPI runtime and session auth`
 
 ### Backend tasks
 
-- [ ] Tạo adapter tại \`apps/api\`, không đặt import FastAPI trong core package.
+- [ ] Tạo adapter tại `apps/api`, không đặt import FastAPI trong core package.
 - [ ] Thêm FastAPI/Uvicorn thành dependency trực tiếp, pin version và cập nhật lock/dependency docs theo quy ước repo.
-- [ ] Tạo app factory và lifespan để tạo \`ApplicationFactory\` một lần/process và close resources khi shutdown.
-- [ ] Thêm \`GET /health/live\` và \`GET /health/ready\`; readiness không được tải embedding model hay gọi cloud provider.
+- [ ] Tạo app factory và lifespan để tạo `ApplicationFactory` một lần/process và close resources khi shutdown.
+- [ ] Thêm `GET /health/live` và `GET /health/ready`; readiness không được tải embedding model hay gọi cloud provider.
 - [ ] Thêm request ID, structured logging và exception mapping.
-- [ ] Tạo DTO HTTP riêng; không trả ORM model hoặc \`AppContext\` thô.
+- [ ] Tạo DTO HTTP riêng; không trả ORM model hoặc `AppContext` thô.
 - [ ] Nối register/login vào Authentication use case hiện có.
 - [ ] Triển khai session adapter theo ADR: opaque random token, cookie HttpOnly, Secure ở HTTPS, SameSite đã chốt, expiry và revoke khi logout.
 - [ ] Bảo vệ write endpoints bằng CSRF/Origin policy phù hợp với same-origin frontend.
@@ -331,10 +331,10 @@ Không làm chatbot thật, upload thật, database mới hay API auth giả. D�
 
 Contract path có thể thay đổi theo ADR nhưng phải nhất quán. Đề xuất:
 
-- \`POST /api/v1/auth/register\`
-- \`POST /api/v1/auth/login\`
-- \`POST /api/v1/auth/logout\`
-- \`GET /api/v1/auth/me\`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
 
 Response không bao giờ chứa password hash, raw session token hoặc provider secret. Nếu API chạy same-origin qua Next.js proxy, không mở CORS wildcard.
 
@@ -349,14 +349,14 @@ Response không bao giờ chứa password hash, raw session token hoặc provide
 
 ## 10. Phase 3 — UI auth và authenticated shell
 
-**Commit gợi ý:** \`feat(web): integrate login and protected workspace\`
+**Commit gợi ý:** `feat(web): integrate login and protected workspace`
 
 ### Công việc
 
-- [ ] Làm trang \`/login\` và \`/register\` theo design tokens; có pending/error/success state.
-- [ ] Tạo một API client tập trung trong \`src/lib/api/\`; không hard-code fetch URL trong từng component.
-- [ ] Ưu tiên same-origin \`/api\`; nếu cần proxy, chỉ cấu hình server-side URL.
-- [ ] Tạo \`AuthProvider\`/server session check phù hợp với kiến trúc đã chọn; tránh duplicate request khi chuyển trang.
+- [ ] Làm trang `/login` và `/register` theo design tokens; có pending/error/success state.
+- [ ] Tạo một API client tập trung trong `src/lib/api/`; không hard-code fetch URL trong từng component.
+- [ ] Ưu tiên same-origin `/api`; nếu cần proxy, chỉ cấu hình server-side URL.
+- [ ] Tạo `AuthProvider`/server session check phù hợp với kiến trúc đã chọn; tránh duplicate request khi chuyển trang.
 - [ ] Bảo vệ route ở UX layer nhưng vẫn dựa vào API authorization thật.
 - [ ] Khi session hết hạn, thông báo rõ và đưa người dùng về login; không loop redirect.
 - [ ] Logout phải clear UI state, query cache và selected document/session để tránh lộ data khi đổi tài khoản.
@@ -368,15 +368,15 @@ Người dùng có thể đăng nhập, reload, mở workspace và logout. Khôn
 
 ## 11. Phase 4 — Document library và upload/ingestion
 
-**Commit gợi ý:** \`feat(web): add document library and ingestion status\`
+**Commit gợi ý:** `feat(web): add document library and ingestion status`
 
 ### API/use-case tasks
 
-- [ ] Map list/get document sang \`OwnedDocuments\` hoặc facade tương đương.
+- [ ] Map list/get document sang `OwnedDocuments` hoặc facade tương đương.
 - [ ] Tạo endpoint upload multipart PDF và validate file ở backend.
 - [ ] Giữ MIME/content validation, size limit, duplicate SHA-256 behavior và cleanup file tạm hiện có.
 - [ ] Chốt API trả đồng bộ hay 202 + job/document ID. Nếu 202, endpoint status phải trả trạng thái thực.
-- [ ] Vì use case ingestion hiện chạy synchronous và chỉ có callback progress, quyết định bounded worker/queue và restart behavior trong ADR; không gọi \`BackgroundTasks\` là durable queue.
+- [ ] Vì use case ingestion hiện chạy synchronous và chỉ có callback progress, quyết định bounded worker/queue và restart behavior trong ADR; không gọi `BackgroundTasks` là durable queue.
 - [ ] Chạy công việc embedding/parser nặng ngoài event loop async.
 - [ ] Giới hạn số job đồng thời và tài nguyên.
 - [ ] Nếu chưa có durable queue, ghi rõ giới hạn khi API restart; UI không được hứa resume nếu backend chưa hỗ trợ.
@@ -384,7 +384,7 @@ Người dùng có thể đăng nhập, reload, mở workspace và logout. Khôn
 
 ### UI tasks
 
-- [ ] Tạo trang \`/documents\` với danh sách, trạng thái, tên file và metadata có sẵn.
+- [ ] Tạo trang `/documents` với danh sách, trạng thái, tên file và metadata có sẵn.
 - [ ] Tạo upload dropzone desktop + button chọn file; mobile dùng native file picker.
 - [ ] Validate kích thước/extension ở frontend để UX nhanh, nhưng backend vẫn là nguồn quyết định.
 - [ ] Hiển thị queued/processing/ready/failed; chỉ hiển thị stage nếu backend thật sự trả stage.
@@ -403,11 +403,11 @@ Upload PDF → backend xử lý → document READY/FAILED → UI cập nhật b�
 
 ## 12. Phase 5 — AI Tutor và citations
 
-**Commit gợi ý:** \`feat(web): add document tutor with evidence citations\`
+**Commit gợi ý:** `feat(web): add document tutor with evidence citations`
 
 ### API tasks
 
-- [ ] Tạo chat endpoint dựa trên \`AnswerQuestionUseCase\`/session facade đã có; không port ReAct/RAG logic sang TypeScript.
+- [ ] Tạo chat endpoint dựa trên `AnswerQuestionUseCase`/session facade đã có; không port ReAct/RAG logic sang TypeScript.
 - [ ] Mỗi request authorize document trước khi retrieval.
 - [ ] Chuẩn hóa response DTO: answer, citations/evidence, request/run ID và metadata an toàn cần cho UI.
 - [ ] Citation tối thiểu: document ID/title, chunk ID, snippet/text, page bounds nếu có, optional score; không bịa page number.
@@ -417,7 +417,7 @@ Upload PDF → backend xử lý → document READY/FAILED → UI cập nhật b�
 
 ### UI tasks
 
-- [ ] Tạo route \`/documents/[documentId]/study\`.
+- [ ] Tạo route `/documents/[documentId]/study`.
 - [ ] Desktop: reader + tutor panes, có thể collapse; không ép thành 3 cột.
 - [ ] Mobile: tab **Đọc / Hỏi AI**, giữ draft/context khi chuyển tab.
 - [ ] Chat composer có pending/streaming/reconnecting/disabled/quota state.
@@ -432,7 +432,7 @@ Vertical slice đầu tiên phải chạy thật: login → upload PDF → READY
 
 ## 13. Phase 6 — Quiz, progress và learning path
 
-**Commit gợi ý:** \`feat(web): add quiz and learning progress flows\`
+**Commit gợi ý:** `feat(web): add quiz and learning progress flows`
 
 ### Quiz
 
@@ -446,7 +446,7 @@ Vertical slice đầu tiên phải chạy thật: login → upload PDF → READY
 
 ### Progress và learning path
 
-- [ ] Dùng \`GetProgressUseCase\`/repository hiện có; kiểm tra mọi query được scope theo principal.
+- [ ] Dùng `GetProgressUseCase`/repository hiện có; kiểm tra mọi query được scope theo principal.
 - [ ] Phân biệt điểm quiz, mastery ước tính và nội dung đã hoàn thành; không gộp thành một phần trăm vô nghĩa.
 - [ ] Learning path mặc định là list-first; graph chỉ là toggle tùy chọn.
 - [ ] Graph rỗng hoặc có cycle phải có fallback list/empty state.
@@ -459,7 +459,7 @@ Quiz generation, submit, explanation và progress hoạt động end-to-end. Tes
 
 ## 14. Phase 7 — Hoàn thiện mobile, accessibility và design fidelity
 
-**Commit gợi ý:** \`fix(web): harden responsive learning flows\`
+**Commit gợi ý:** `fix(web): harden responsive learning flows`
 
 Kiểm thử tối thiểu tại các viewport:
 
@@ -487,19 +487,19 @@ Dùng Playwright cho luồng chính và axe/accessibility checks nếu đã cấ
 
 ## 15. Phase 8 — Docker, CI, cutover và gỡ Streamlit
 
-**Commit gợi ý:** \`chore(deploy): cut over from Streamlit to web and API\`
+**Commit gợi ý:** `chore(deploy): cut over from Streamlit to web and API`
 
 Chỉ mở phase này khi Phase 2–7 đã merge/test trong nhánh và regression matrix đạt.
 
 ### Compose/runtime
 
-- [ ] Tạo production Dockerfile riêng cho \`apps/api\` và \`apps/web\`; build reproducible và chạy non-root khi khả thi.
-- [ ] Cập nhật \`compose.yaml\` thành web/api/db/migrate; giữ local-ai/Ollama profile nếu còn dùng.
-- [ ] Không thay tên/volume \`postgres_data\`, \`app_data\`, \`hf_cache\` hoặc Chroma path khi chưa rehearsal.
-- [ ] Chuyển healthcheck khỏi \`/_stcore/health\` sang API/web health endpoint phù hợp.
+- [ ] Tạo production Dockerfile riêng cho `apps/api` và `apps/web`; build reproducible và chạy non-root khi khả thi.
+- [ ] Cập nhật `compose.yaml` thành web/api/db/migrate; giữ local-ai/Ollama profile nếu còn dùng.
+- [ ] Không thay tên/volume `postgres_data`, `app_data`, `hf_cache` hoặc Chroma path khi chưa rehearsal.
+- [ ] Chuyển healthcheck khỏi `/_stcore/health` sang API/web health endpoint phù hợp.
 - [ ] Chỉ expose web port ra host; DB và API ở internal network trừ khi có quyết định expose API riêng.
 - [ ] Kiểm tra Alembic chạy trước API nhận traffic.
-- [ ] Cập nhật \`config/docker.env.example\`, docs vận hành, README và troubleshooting.
+- [ ] Cập nhật `config/docker.env.example`, docs vận hành, README và troubleshooting.
 - [ ] Test shutdown/restart và log không chứa secrets/document content.
 
 ### CI
@@ -520,7 +520,7 @@ Chỉ mở phase này khi Phase 2–7 đã merge/test trong nhánh và regressio
 - [ ] Kiểm tra dữ liệu cũ đọc được; không reset DB/Chroma.
 - [ ] Giữ image/Compose cũ để rollback.
 - [ ] Thử rollback bằng cách chuyển traffic về phiên bản cũ trên môi trường test.
-- [ ] Sau khi ổn định mới xóa \`apps/streamlit_legacy\`, \`.streamlit\`, Streamlit dependencies/config và docs cũ.
+- [ ] Sau khi ổn định mới xóa `apps/streamlit_legacy`, `.streamlit`, Streamlit dependencies/config và docs cũ.
 - [ ] Không merge chỉ vì giao diện mới đẹp; phải đạt tất cả gate dữ liệu/security/CI.
 
 ## 16. API contract và error handling dùng thống nhất
@@ -529,14 +529,14 @@ Các endpoint dưới đây là **đề xuất** cần map sang use case và ch�
 
 | Capability | Route dự kiến | Quy tắc |
 |---|---|---|
-| Health | \`GET /health/live\`, \`GET /health/ready\` | Tách liveness/readiness |
-| Auth | \`POST /api/v1/auth/register\`, \`login\`, \`logout\`, \`GET /api/v1/auth/me\` | Principal lấy từ session |
-| Documents | \`GET /api/v1/documents\`, \`POST /api/v1/documents\`, \`GET /api/v1/documents/{id}\` | Ownership bắt buộc |
-| Ingestion | \`GET /api/v1/documents/{id}/status\` hoặc job route đã chốt | Status thật; không giả progress |
-| Chat | \`POST /api/v1/documents/{id}/chat\` | Evidence/citations có schema |
-| Quiz | \`POST /api/v1/documents/{id}/quizzes\`, \`POST /api/v1/quiz-attempts\` | Typed schema, ownership, double-submit policy |
-| Progress | \`GET /api/v1/progress\` | Chỉ dữ liệu của principal |
-| Learning path | \`GET /api/v1/documents/{id}/learning-path\` | Chỉ bật khi capability được map/test |
+| Health | `GET /health/live`, `GET /health/ready` | Tách liveness/readiness |
+| Auth | `POST /api/v1/auth/register`, `login`, `logout`, `GET /api/v1/auth/me` | Principal lấy từ session |
+| Documents | `GET /api/v1/documents`, `POST /api/v1/documents`, `GET /api/v1/documents/{id}` | Ownership bắt buộc |
+| Ingestion | `GET /api/v1/documents/{id}/status` hoặc job route đã chốt | Status thật; không giả progress |
+| Chat | `POST /api/v1/documents/{id}/chat` | Evidence/citations có schema |
+| Quiz | `POST /api/v1/documents/{id}/quizzes`, `POST /api/v1/quiz-attempts` | Typed schema, ownership, double-submit policy |
+| Progress | `GET /api/v1/progress` | Chỉ dữ liệu của principal |
+| Learning path | `GET /api/v1/documents/{id}/learning-path` | Chỉ bật khi capability được map/test |
 
 Error contract phải ổn định và không phụ thuộc vào câu chữ:
 
@@ -576,20 +576,20 @@ DTO frontend phải được generate/validate từ OpenAPI hoặc được ki�
 
 Tạo commit nhỏ sau mỗi mục tiêu chạy được. Ví dụ:
 
-1. \`docs(ui): add implementation playbook and sketch references\`
-2. \`feat(web): scaffold Next.js app and design tokens\`
-3. \`feat(web): add responsive navigation shell\`
-4. \`feat(api): add FastAPI health and app lifespan\`
-5. \`feat(api): add session authentication\`
-6. \`feat(web): integrate login and session expiry\`
-7. \`feat(api): expose owned document list and upload\`
-8. \`feat(web): add document library and status polling\`
-9. \`feat(api): expose grounded chat evidence\`
-10. \`feat(web): add AI tutor and citation viewer\`
-11. \`feat(web): add quiz and progress\`
-12. \`test(e2e): cover first complete learning flow\`
-13. \`chore(deploy): add web and API Compose services\`
-14. \`chore(ui): remove Streamlit after cutover gates pass\`
+1. `docs(ui): add implementation playbook and sketch references`
+2. `feat(web): scaffold Next.js app and design tokens`
+3. `feat(web): add responsive navigation shell`
+4. `feat(api): add FastAPI health and app lifespan`
+5. `feat(api): add session authentication`
+6. `feat(web): integrate login and session expiry`
+7. `feat(api): expose owned document list and upload`
+8. `feat(web): add document library and status polling`
+9. `feat(api): expose grounded chat evidence`
+10. `feat(web): add AI tutor and citation viewer`
+11. `feat(web): add quiz and progress`
+12. `test(e2e): cover first complete learning flow`
+13. `chore(deploy): add web and API Compose services`
+14. `chore(ui): remove Streamlit after cutover gates pass`
 
 Không bắt buộc dùng đúng tên commit, nhưng giữ mỗi commit có thể review/rollback riêng.
 
@@ -597,7 +597,7 @@ Không bắt buộc dùng đúng tên commit, nhưng giữ mỗi commit có th�
 
 Chạy các kiểm tra tương ứng:
 
-\`\`\`powershell
+```powershell
 # Python/core regression
 .venv/Scripts/python -m pytest -q
 .venv/Scripts/ruff check .
@@ -609,9 +609,9 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
-\`\`\`
+```
 
-Chạy những script frontend đã được khai báo thật trong \`package.json\`. Nếu test chưa được cấu hình, thêm test runner và test trước khi tuyên bố phase đã pass.
+Chạy những script frontend đã được khai báo thật trong `package.json`. Nếu test chưa được cấu hình, thêm test runner và test trước khi tuyên bố phase đã pass.
 
 ### PR description nên có
 
@@ -645,11 +645,11 @@ Không coi nhánh đã hoàn tất cho đến khi:
 
 Thực hiện theo đúng thứ tự này, chưa cần code API/UI ngay:
 
-1. [ ] Checkout \`feature/ui-learning-workspace\`.
+1. [ ] Checkout `feature/ui-learning-workspace`.
 2. [ ] Chạy baseline Python tests/lint/import-boundary; ghi lại kết quả.
-3. [ ] Copy sketch desktop/mobile vào \`docs/design/ui-v1/assets/\` và thêm design master plan nếu muốn version-control.
-4. [ ] Review \`FRONTEND_MIGRATION_NEXTJS_FASTAPI.md\` và tài liệu này; quyết định Course domain cho MVP.
-5. [ ] Tạo route inventory + feature parity matrix từ \`apps/streamlit_legacy\`.
+3. [ ] Copy sketch desktop/mobile vào `docs/design/ui-v1/assets/` và thêm design master plan nếu muốn version-control.
+4. [ ] Review `FRONTEND_MIGRATION_NEXTJS_FASTAPI.md` và tài liệu này; quyết định Course domain cho MVP.
+5. [ ] Tạo route inventory + feature parity matrix từ `apps/streamlit_legacy`.
 6. [ ] Chốt ADR auth/session và ingestion job/status.
 7. [ ] Freeze OpenAPI MVP cho auth, documents/status và chat/citations.
 8. [ ] Tạo commit tài liệu, sau đó mới scaffold Next.js.
