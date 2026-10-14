@@ -108,3 +108,5 @@ node_modules/
 playwright-report/
 test-results/
 .test-tmp/
+!apps/web/src/lib/
+!apps/web/src/lib/**
