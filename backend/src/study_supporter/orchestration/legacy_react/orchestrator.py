@@ -37,7 +37,7 @@ class ReActOrchestrator:
         self.system_prompt = build_react_system_prompt(tools)
 
     def parse_llm_output(self, text: str) -> dict:
-        r"""
+        """
 
                       text
                         │

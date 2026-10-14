@@ -2,11 +2,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from study_supporter.infrastructure.retrieval.hybrid_adapter import (
-    hybrid_search,
-    reciprocal_rank_fusion,
-)
-from study_supporter.domain.documents import Chunk
+from src.rag.hybrid_retriever import hybrid_search, reciprocal_rank_fusion
+from src.rag.schemas import Chunk
 from study_supporter.ai.retrieval.rrf import reciprocal_rank_fusion as core_rrf
 
 

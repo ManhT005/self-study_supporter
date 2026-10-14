@@ -14,6 +14,7 @@ DETERMINISTIC_IMPORTS = {
     "study_supporter.domain.assessment": {"pydantic"},
     "study_supporter.ai.graph.algorithms": {"networkx"},
     "study_supporter.ai.assessment.json_parsing": {"pydantic"},
+    "study_supporter.application.use_cases.llm_json": {"pydantic"},
 }
 ALLOWED = {
     "domain": {"domain"},
@@ -23,7 +24,7 @@ ALLOWED = {
     "orchestration": PURE | {"orchestration"},
     "interfaces": {"interfaces", "application", "domain"},
 }
-# Pure modules use stdlib plus the exact deterministic dependencies above.
+# Core is stdlib-only today. Allowing only stdlib catches new SDKs automatically.
 
 
 def violations(source: str, module: str) -> list[str]:

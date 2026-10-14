@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from study_supporter.domain.knowledge_graph import ConceptGraph
+from src.graph.schemas import ConceptGraph
 
 
 def test_unknown_edge_cannot_create_an_invented_node():

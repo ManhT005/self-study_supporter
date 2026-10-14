@@ -9,7 +9,7 @@ never during build. Download time depends on bandwidth; BGE-M3 is a large model.
 PowerShell:
 
 ```powershell
-Copy-Item config/docker.env.example .env.docker
+Copy-Item .env.docker.example .env.docker
 # Edit POSTGRES_PASSWORD; keep provider keys blank for the local baseline.
 docker compose --env-file .env.docker config --quiet
 docker compose --env-file .env.docker up -d --build --wait
@@ -17,7 +17,7 @@ docker compose --env-file .env.docker ps
 Invoke-WebRequest http://localhost:8501/_stcore/health
 ```
 
-POSIX uses `cp config/docker.env.example .env.docker` and
+POSIX uses `cp .env.docker.example .env.docker` and
 `curl --fail http://localhost:8501/_stcore/health`; Compose commands are identical.
 Health 200 proves Streamlit liveness, not DB/model readiness. Run functional smoke
 separately; offline fake vectors cannot establish BGE model quality or LLM availability.
@@ -34,9 +34,6 @@ Host mode: `OLLAMA_BASE_URL=http://host.docker.internal:11434`. Ensure Docker ca
 reach the host listener. Container mode: set `http://ollama:11434`, then
 `docker compose --env-file .env.docker --profile local-ai up -d`.
 Provision explicitly with `docker compose --env-file .env.docker exec ollama ollama pull qwen3:1.7b`.
-Set `OLLAMA_MODEL=qwen3:1.7b` in `.env.docker` when using that model and recreate
-the app. The preserved UI default is `qwen2.5:1.5b`; it must be installed if you
-keep the default. Real-model smoke explicitly selects `qwen3:1.7b`.
 No GPU required. Do not open the listener to public networks.
 
 ## Backup and isolated restore
@@ -47,8 +44,8 @@ The helper stops app writes, dumps SQL and snapshots `/app/data` at the same bou
 then restarts the app if it was running. A failed backup has no completed manifest.
 
 ```powershell
-python scripts/docker_backup.py backup data/backups/local-snapshot --project-name self-study-supporter
-python scripts/docker_backup.py restore data/backups/local-snapshot --project-name restore-check
+python scripts/docker_backup.py backup data/backups/p0-001 --project-name self-study-supporter
+python scripts/docker_backup.py restore data/backups/p0-001 --project-name p0-restore-check
 ```
 
 Restore refuses the source project and any existing target containers/volumes.
@@ -58,9 +55,9 @@ not part of the snapshot. Restoring old data is never an automatic schema stamp.
 
 ## Dependency locks
 
-`backend/pyproject.toml` declares direct dependencies; `requirements/runtime.txt` locks the
-Linux x86_64/Python 3.11 CPU deployment. `requirements/dev.txt` locks offline test tooling.
-See [lock regeneration](../../requirements/README.md); review the diff and rebuild Docker.
+`requirements.in` pins direct runtime dependencies; `requirements.txt` locks the
+Linux x86_64/Python 3.11 CPU deployment. `requirements-dev.txt` locks offline test tooling.
+Regenerate with uv 0.13.0, review the diff, then clean-build before committing.
 The existing `.env`, uploaded data and secrets are excluded by `.dockerignore`.
 
 ## Executable smoke commands

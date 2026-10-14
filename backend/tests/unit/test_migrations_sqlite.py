@@ -61,7 +61,7 @@ def test_imports_do_not_connect_or_create_tables(monkeypatch):
         [
             sys.executable,
             "-c",
-            "import study_supporter.infrastructure.persistence.sqlalchemy.auth_repository, study_supporter.infrastructure.persistence.sqlalchemy.document_repository, study_supporter.infrastructure.persistence.sqlalchemy.progress_repository",
+            "import src.auth.auth_service, src.documents.document_service, src.memory.progress_db",
         ],
         capture_output=True,
         text=True,

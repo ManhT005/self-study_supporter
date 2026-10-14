@@ -1,6 +1,6 @@
 # Database lifecycle
 
-`backend/src/study_supporter/infrastructure/persistence/sqlalchemy/models.py` is the schema source of truth. Alembic revision `p0_0001`
+`src/db/models.py` is the schema source of truth. Alembic revision `p0_0001`
 matches the legacy User/Document/QuizAttempt schema. Integer users/documents and
 historical string quiz user IDs are intentionally preserved: no unreviewed type
 conversion or FK/backfill for legacy quiz identities. New attempts validate the

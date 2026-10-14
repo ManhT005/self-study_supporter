@@ -13,7 +13,11 @@ class GetProgressTool(BaseTool):
         self.user_id = user_id
 
     def run(self) -> str:
-        summary = self.progress_db.execute(AppContext(self.user_id))
+        summary = (
+            self.progress_db.execute(AppContext(self.user_id))
+            if hasattr(self.progress_db, "execute")
+            else self.progress_db.get_summary(self.user_id)
+        )
         if summary["total_attempts"] == 0:
             return f"Học sinh '{self.user_id}' chưa làm quiz nào."
 

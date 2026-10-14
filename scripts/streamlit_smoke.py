@@ -4,18 +4,15 @@ import uuid
 
 from streamlit.testing.v1 import AppTest
 
-import os
-from study_supporter.bootstrap import ApplicationFactory
-from study_supporter.config import Settings
+from src.auth.auth_service import register_user
 
 
 def main():
     marker = uuid.uuid4().hex[:12]
     password = uuid.uuid4().hex
     a, b = f"ui-a-{marker}", f"ui-b-{marker}"
-    with ApplicationFactory(Settings.from_mapping(os.environ)) as services:
-        b_id = services.authentication.register(b, password).user_id
-    app = AppTest.from_file("apps/streamlit_legacy/main.py", default_timeout=30).run()
+    b_id = register_user(b, password)
+    app = AppTest.from_file("main.py", default_timeout=30).run()
     assert not app.exception
     app.text_input(key="register_username").set_value(a)
     app.text_input(key="register_password").set_value(password)

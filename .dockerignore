@@ -11,7 +11,8 @@ venv
 htmlcov
 .env
 .env.*
-*.env
+!.env.example
+!.env.docker.example
 .streamlit/secrets.toml
 data
 *.db

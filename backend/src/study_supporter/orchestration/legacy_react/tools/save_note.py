@@ -15,5 +15,9 @@ class SaveNoteTool(BaseTool):
         self.user_id = user_id
 
     def run(self, note: str) -> str:
-        note_id = self.long_term_memory.execute(AppContext(self.user_id), note)
+        note_id = (
+            self.long_term_memory.execute(AppContext(self.user_id), note)
+            if hasattr(self.long_term_memory, "execute")
+            else self.long_term_memory.save_note(self.user_id, note)
+        )
         return f"Đã lưu ghi chú (id: {note_id}) cho học sinh '{self.user_id}': {note}"

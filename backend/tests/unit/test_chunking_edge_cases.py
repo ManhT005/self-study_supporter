@@ -1,15 +1,15 @@
 import fitz
 import pytest
 
-from study_supporter.domain.upload_validation import validate_pdf_upload
-from study_supporter.ai.ingestion.chunking import (
+from src.documents.upload_validation import validate_pdf_upload
+from src.rag.chunker import (
     compute_breakpoints,
     compute_distances,
     flatten_pages_to_sentences,
     group_sentences_into_chunks,
 )
-from study_supporter.infrastructure.documents.pymupdf_parser import parse_pdf
-from study_supporter.domain.documents import DocumentPage
+from src.rag.pdf_parser import parse_pdf
+from src.rag.schemas import DocumentPage
 from study_supporter.domain.errors import DocumentUnsupported
 from study_supporter.domain.errors import EmbeddingUnavailable
 
@@ -73,7 +73,7 @@ def test_invalid_upload(name, mime, content):
 
 def test_incomplete_embeddings_fail_closed():
     from unittest.mock import Mock
-    from study_supporter.infrastructure.embeddings.sentences import embed_sentences
+    from src.rag.chunker import embed_sentences
 
     sentences = flatten_pages_to_sentences(
         [DocumentPage(source="fixture.pdf", page_number=1, text="First sentence. Second sentence.")]
