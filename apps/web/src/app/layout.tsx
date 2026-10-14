@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+import "./learning.css";
 export const metadata: Metadata = {
   title: "Self Study Supporter",
   description: "Học từ tài liệu của bạn, cùng trợ giảng AI có dẫn chứng.",
