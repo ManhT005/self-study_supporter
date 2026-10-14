@@ -15,7 +15,13 @@ import { api, ApiError, identitySchema, message, post } from "@/lib/api/client";
 import { Button, ErrorState, LoadingState } from "@/components/ui";
 import { NavigationShell } from "@/components/navigation";
 
-export function AuthForm({ register = false }: { register?: boolean }) {
+export function AuthForm({
+  register = false,
+  expired = false,
+}: {
+  register?: boolean;
+  expired?: boolean;
+}) {
   const router = useRouter();
   const cache = useQueryClient();
   const lock = useRef(false);
@@ -93,6 +99,11 @@ export function AuthForm({ register = false }: { register?: boolean }) {
       <main className="auth-form">
         <p className="eyebrow">Self Study Supporter</p>
         <h1>{register ? "Bắt đầu hành trình học" : "Chào mừng trở lại"}</h1>
+        {expired && (
+          <p role="status">
+            Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.
+          </p>
+        )}
         <p className="muted">
           {register
             ? "Tạo tài khoản để học từ tài liệu của bạn."
@@ -156,12 +167,32 @@ export function AuthenticatedWorkspace({ children }: { children: ReactNode }) {
   const path = usePathname();
   const user = useQuery({
     queryKey: ["identity"],
-    queryFn: ({ signal }) => api("/auth/me", identitySchema, { signal }),
+    queryFn: async ({ signal }) => {
+      const identity = await api("/auth/me", identitySchema, { signal });
+      const previous = cache.getQueryData<z.infer<typeof identitySchema>>([
+        "identity",
+      ]);
+      if (previous && previous.username !== identity.username) {
+        await cache.cancelQueries({
+          predicate: (query) => query.queryKey[0] !== "identity",
+        });
+        cache.removeQueries({
+          predicate: (query) => query.queryKey[0] !== "identity",
+        });
+        cache.getMutationCache().clear();
+      }
+      return identity;
+    },
     staleTime: 60_000,
     refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
   });
   const [expired, setExpired] = useState(false);
-  useEffect(() => { const expire = () => setExpired(true); window.addEventListener("study-session-expired", expire); return () => window.removeEventListener("study-session-expired", expire); }, []);
+  useEffect(() => {
+    const expire = () => setExpired(true);
+    window.addEventListener("study-session-expired", expire);
+    return () => window.removeEventListener("study-session-expired", expire);
+  }, []);
   useEffect(
     () =>
       cache.getQueryCache().subscribe((event) => {
@@ -209,6 +240,7 @@ export function AuthenticatedWorkspace({ children }: { children: ReactNode }) {
     );
   return (
     <NavigationShell
+      key={user.data.username}
       username={user.data.username}
       logout={
         <Button

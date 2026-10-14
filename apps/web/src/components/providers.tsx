@@ -9,5 +9,10 @@ export function Providers({ children }: { children: ReactNode }) {
         defaultOptions: { queries: { staleTime: 30_000, retry: false } },
       }),
   );
-  return <QueryClientProvider client={client}><Connectivity />{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      <Connectivity />
+      {children}
+    </QueryClientProvider>
+  );
 }
