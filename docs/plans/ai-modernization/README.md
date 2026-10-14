@@ -12,6 +12,10 @@ branch observations below remain historical inputs, not fresh acceptance evidenc
 
 ## Reading order
 
+After the foundation merge, start with the
+[post-merge execution plan](09_POST_MERGE_AI_EXECUTION_PLAN.md) and
+[fresh merge-SHA evidence](../../reports/ai-eval/POST_MERGE_BASELINE.md).
+
 | File | Scope | Primary deliverable |
 |---|---|---|
 | [`MASTER_PLAN.md`](MASTER_PLAN.md) | North star, architecture, dependencies, stages 1–6, release sequencing | One accountable roadmap |
