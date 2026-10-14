@@ -22,7 +22,7 @@ from evaluation.schema import (
     dataset_hash,
     load_dataset,
 )
-from evaluation.scoring import paired_bootstrap, score_result, summarize
+from evaluation.scoring import paired_summary, score_result, summarize
 from study_supporter.application.contracts.agent import AgentResult
 
 Variant = Callable[[EvaluationCase], AgentResult]
@@ -59,7 +59,12 @@ def run_comparison(
                     if not isinstance(result, AgentResult):
                         raise ValueError("Variant must return AgentResult")
                     elapsed = (time.perf_counter() - started) * 1000
-                    scores = score_result(case, result, manifest.top_k)
+                    scores = score_result(
+                        case,
+                        result,
+                        manifest.top_k,
+                        tool_capable=manifest.tool_capabilities.get(name),
+                    )
                     if case.expected_error:
                         scores["expected_error_match"] = 0.0
                     record = EvaluationRecord(
@@ -82,6 +87,16 @@ def run_comparison(
                             )
                             for e in result.evidences
                         ),
+                        retrieved_evidence=tuple(
+                            CitationRecord(
+                                document_id=e.document_id,
+                                chunk_id=e.chunk_id,
+                                page_start=e.page_start,
+                                page_end=e.page_end,
+                            )
+                            for e in result.evidences
+                        ),
+                        expected_error=case.expected_error,
                         steps=result.steps,
                         retrieval_calls=tuple(
                             RetrievalRecord(**asdict(c)) for c in result.retrieval_calls
@@ -93,7 +108,12 @@ def run_comparison(
                 except Exception as exc:
                     elapsed = (time.perf_counter() - started) * 1000
                     code = error_code(exc)
-                    scores = score_result(case, None, manifest.top_k)
+                    scores = score_result(
+                        case,
+                        None,
+                        manifest.top_k,
+                        tool_capable=manifest.tool_capabilities.get(name),
+                    )
                     if case.expected_error:
                         scores["expected_error_match"] = float(code == case.expected_error)
                     record = EvaluationRecord(
@@ -105,26 +125,17 @@ def run_comparison(
                         status="error",
                         elapsed_ms=elapsed,
                         error_code=code,
+                        expected_error=case.expected_error,
                         scores=scores,
                     )
                 records.append(record)
-    baseline = "rag_only" if "rag_only" in variants else sorted(variants)[0]
-    paired = {}
-    for name in variants:
-        if name == baseline:
-            continue
-        metrics = sorted({key for record in records for key in record.scores})
-        paired[name] = {
-            metric: paired_bootstrap(records, metric, baseline, name, seed=manifest.seed)
-            for metric in metrics
-        }
     return {
         "run_id": run_id,
         "manifest": manifest.model_dump(mode="json"),
         "selection": {"case_ids": [c.case_id for c in selected], "repetitions": repetitions},
         "records": [r.model_dump(mode="json") for r in records],
         "summary": summarize(records),
-        "paired_deltas": {"baseline": baseline, "candidates": paired},
+        "paired_deltas": paired_summary(records, variants, seed=manifest.seed),
     }
 
 
@@ -133,6 +144,7 @@ def main(argv=None):
     parser.add_argument("--dataset", default="evaluation/datasets/v1/smoke.jsonl")
     parser.add_argument("--corpus", default="evaluation/datasets/v1/fixtures/corpus.json")
     parser.add_argument("--output-dir", default="data/evaluations")
+    parser.add_argument("--report-path-file", help="Write the exact generated JSON path for CI")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--seed", type=int, default=42)
@@ -168,6 +180,7 @@ def main(argv=None):
         provider="synthetic",
         model_id="synthetic-echo-v1",
         prompt_hashes=environment.prompt_hashes(),
+        tool_capabilities={"rag_only": False, "legacy_react": True},
         embedding_id="none/synthetic-lexical-v1",
         index_hash=environment.source_hash,
         top_k=args.top_k,
@@ -183,6 +196,10 @@ def main(argv=None):
     (output / "results.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    if args.report_path_file:
+        Path(args.report_path_file).write_text(
+            str(output / "results.json") + "\n", encoding="utf-8"
+        )
     print(
         json.dumps(
             {"output": str(output), "execution_mode": "offline", "summary": report["summary"]},

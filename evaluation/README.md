@@ -7,6 +7,8 @@ Run the versioned, synthetic contract smoke without models, SQL or Chroma:
 ```powershell
 .venv/Scripts/python -m evaluation.runner_v2 --repetitions 3
 .venv/Scripts/python -m evaluation.runner_v2 --limit 3
+.venv/Scripts/python -m evaluation.runner_v2 --repetitions 3 --report-path-file data/evaluations/report-path.txt
+.venv/Scripts/python -m evaluation.gates --report-path-file data/evaluations/report-path.txt --golden evaluation/golden/v1.json
 ```
 
 The default runs all selected cases. `--limit` explicitly samples the first N cases;
@@ -29,25 +31,62 @@ harness checks source/prompt coverage but cannot verify a caller's infrastructur
 declarations or eliminate provider stochasticity. Its seed controls evaluation
 order/bootstrap, not provider sampling.
 
-Metrics have explicit `n_total`, `n_valid`, `n_failed`, `n_incomplete` and per-metric
-eligible/observed/unknown denominators. Retrieval failures score zero on labeled
-answerable cases. Recall@k means at least one relevant hit per case, MRR uses the
-first relevant rank and nDCG uses binary relevance with duplicate suppression.
-For multi-search execution, ranking metrics use the **first successful retrieval**;
-all ordered retrieval calls are retained separately and citations are the distinct
-evidence union. Citation scope validity checks document membership only; it is not
-claim support, citation precision or human faithfulness. Tool allowlists check names,
-not schema validation or capability sufficiency. Unobserved validation, refusal,
-token usage and cost remain null. Paired 95% bootstrap intervals average repetition
-deltas per case before resampling cases and report missing pairs. They quantify
-these structural metrics only.
+New manifests declare `metric_schema_version="2"`. **Version 1's `recall_at_k`
+was hit rate, not standard recall; do not compare it to version 2 recall.** Historical
+reports remain unchanged. Version 2 keeps hit rate as `hit_rate_at_k`, calculates
+Recall@k as distinct relevant top-k chunks / all distinct relevant chunks, and
+retains MRR/nDCG with rank-preserving duplicate suppression. Empty gold is N/A.
+
+`initial_*` metrics describe the first recorded retrieval call, including an empty
+call; the unprefixed ranking keys alias this initial policy. Without call telemetry,
+the first k returned evidence items are the fallback. `any_search_hit` uses all
+recorded searches (or all returned evidence when call telemetry is absent).
+`union_evidence_recall` uses distinct returned evidence without a top-k cap.
+Retries never inflate initial ranking scores. Failed tool invocations remain a
+legacy measurement limit; the recorder currently captures completed retrieval calls.
+Final-answer context coverage is not inferred from the evidence union.
+
+Cases distinguish `required_tools` from `allowed_tools`, with required ⊆ allowed.
+Manifest `tool_capabilities` declares tool-capable variants. Empty tool calls yield
+`tool_selection_allowed=null`; required coverage is zero when a declared tool-capable
+variant omits a required tool. RAG-only required-tool coverage is N/A and has zero
+eligible cases. Undeclared capabilities remain unmeasured. Name selection, required
+coverage and observed schema validation are separate metrics; legacy validation,
+refusal, token usage and cost remain null.
+
+Summary groups partition all records into `n_completed`, `n_expected_denied`,
+`n_unexpected_failed` and `n_incomplete`. A missing expected denial is an unexpected
+failure even when the raw status is completed. For compatibility, `n_valid`/`n_failed`
+retain raw completed/error status counts; raw `n_failed` includes expected denials
+and must not be used as application error rate. Retrieval failures score zero on
+gold-labeled cases. Per-metric eligible/observed/unknown denominators and paired 95%
+bootstrap intervals remain explicit; repetitions are averaged per case before
+resampling cases. These intervals describe structural metrics only.
+
+`retrieved_evidence` contains candidates, while `supporting_citations` remains null
+until independently assessed. The legacy telemetry `citations` key aliases the
+candidate evidence for compatibility; the public HTTP DTO is unchanged. Citation
+scope validity checks document membership, not claim support or citation precision.
 
 Raw records exclude question/answer/document text, filenames, model reasoning,
 tool arguments and exception strings. A hash replaces the answer, and safe citation
 IDs/pages, tool names and error codes support diagnostics. See [report policy](reports/README.md).
 
 Default pytest covers fake-provider regression/schema/scoring tests. CI also runs
-the synthetic CLI and retains its sanitized offline artifact. Independent ≥100-case
+the synthetic CLI and a [versioned structural golden gate](golden/README.md), retaining
+the sanitized artifact even on failure. The gate checks the frozen manifest,
+every case/variant/repetition, record-level scores, recomputed summary/paired stats,
+candidate provenance, expected vs unexpected outcomes, and independent semantic
+fixtures. It exits nonzero for corrupt/missing data or violated expectations.
+The golden applies to the full 15-case, three-repetition run; `--limit` is a smoke
+option and deliberately fails that full-run membership gate.
+
+Authorization coverage also exercises real SQL ownership through the application,
+legacy adapter and retrieval boundary, plus authenticated HTTP foreign chat/note/quiz
+requests with provider/vector/write assertions. A deterministic adversarial provider
+tests forged identity arguments after injected document text reaches its prompt.
+This proves the scoped boundary for those scripted cases, not general real-model
+prompt-injection robustness or real Chroma integration. Independent ≥100-case
 labels, frozen holdout, real-model repetitions, blinded review and operational UI
 gates remain required by the [roadmap](../docs/plans/ai-modernization/README.md).
 

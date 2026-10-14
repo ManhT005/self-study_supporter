@@ -40,6 +40,7 @@ def test_smoke_has_unique_labels_and_reproducible_source_hash(tmp_path):
         {"requires_history": True},
         {"must_abstain": True},
         {"document_ids": ["doc_a", "doc_a"]},
+        {"required_tools": ["save_note"]},
     ],
 )
 def test_invalid_labels_are_rejected(change):

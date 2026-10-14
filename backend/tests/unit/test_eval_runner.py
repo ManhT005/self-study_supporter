@@ -33,6 +33,7 @@ def environment_and_manifest():
         provider="synthetic",
         model_id="synthetic-echo-v1",
         prompt_hashes=environment.prompt_hashes(),
+        tool_capabilities={"rag_only": False, "legacy_react": True},
         embedding_id="none",
         index_hash=environment.source_hash,
         top_k=3,
@@ -59,11 +60,27 @@ def test_all_cases_are_paired_repeated_and_scope_failures_are_explicit(monkeypat
     for name in variants:
         summary = report["summary"][name]
         assert summary["n_total"] == 30 and summary["n_valid"] == 26 and summary["n_failed"] == 4
+        assert summary["n_completed"] == 26 and summary["n_expected_denied"] == 4
+        assert summary["n_unexpected_failed"] == 0
+        assert (
+            sum(
+                summary[key]
+                for key in (
+                    "n_completed",
+                    "n_expected_denied",
+                    "n_unexpected_failed",
+                    "n_incomplete",
+                )
+            )
+            == summary["n_total"]
+        )
         assert summary["metrics"]["expected_error_match"]["mean"] == 1.0
         assert summary["metrics"]["abstention_correctness"]["n_unknown"] == 4
         assert summary["metrics"]["tool_validation_rate"]["mean"] is None
     scopes = [r for r in report["records"] if r["category"] == "privacy"]
     assert all(r["error_code"] == "AUTH_SCOPE" and not r["citations"] for r in scopes)
+    assert all(r["supporting_citations"] is None for r in report["records"])
+    assert report["manifest"]["metric_schema_version"] == "2"
     second = run_comparison(cases, variants, manifest, repetitions=2)
     keys = ("case_id", "variant", "repetition", "scores", "status", "retrieved_chunk_ids")
     assert [tuple(r[k] for k in keys) for r in report["records"]] == [
@@ -83,6 +100,7 @@ def test_provider_failure_remains_in_retrieval_denominator_and_is_sanitized():
     )
     stats = report["summary"]["rag_only"]
     assert stats["n_failed"] == 2 and stats["n_valid"] == 0
+    assert stats["n_unexpected_failed"] == 2 and stats["n_expected_denied"] == 0
     assert stats["metrics"]["recall_at_k"] == {
         "mean": 0.0,
         "n_eligible": 2,

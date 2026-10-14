@@ -80,6 +80,7 @@ def build(output=None):
                 "reference_facts": [chunk_text[c] for c in relevant],
                 "must_abstain": category == "unanswerable",
                 "allowed_tools": ["search_docs"],
+                "required_tools": [] if privacy else ["search_docs"],
                 "expected_error": "AUTH_SCOPE" if privacy else None,
                 "source_hash": source_hash,
                 "annotation_version": "v1",

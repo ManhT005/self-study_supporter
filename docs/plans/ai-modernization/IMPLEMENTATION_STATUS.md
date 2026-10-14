@@ -7,7 +7,15 @@ executable foundation; its benchmark acceptance gate remains open. Phases 2–6 
 proposals and have not been implemented or enabled.
 
 The Agent/API refactor is recorded separately in commit `bd9eab8`; evaluation,
-roadmap documents and validation evidence form the next scoped commit on this branch.
+roadmap documents and validation evidence were committed in `679665b`.
+
+Review follow-up uses `fix/eval-metrics-and-coverage` from `679665b`, following
+the review's option A without merging or changing `develop`. Metric/tool/retrieval
+semantics are corrected in `00a951c`; SQL/API scope coverage and the versioned
+golden CI gate are recorded in `ba36691`. See the
+[review resolution and fresh local evidence](../../reports/ai-eval/2026-10-14-review-resolution.md).
+QA-01 through QA-06 have local implementation/test evidence. Remote CI on the fix,
+independent Tech/Test Lead signoff and maintainer merge approval remain pending.
 
 ## Delivered in this branch
 
@@ -41,6 +49,10 @@ production load performance, a deployment or remote CI success. V2's CLI is synt
 live callback integration/provisioning remains separate opt-in work. The smoke uses
 a search-only prompt and lexical retriever, not BGE-M3/hybrid production ranking.
 Unknown legacy tool validation, refusal and usage remain explicitly unmeasured.
+Metric schema version 2 distinguishes standard recall from hit rate, initial ranking
+from multi-search coverage, and expected denials from unexpected failures. Candidate
+evidence is separate from nullable supporting-citation telemetry. The historical
+foundation report retains version 1 semantics and is not rewritten as new evidence.
 
 ## Open gates before the next framework phase
 
