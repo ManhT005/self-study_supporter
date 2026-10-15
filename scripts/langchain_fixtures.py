@@ -6,6 +6,7 @@ from typing import Any
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.runnables import RunnableLambda
 from pydantic import Field
 
 
@@ -21,6 +22,17 @@ class ScriptedNativeModel(BaseChatModel):
 
     def bind_tools(self, tools, **kwargs):
         return self
+
+    def with_structured_output(self, schema, **kwargs):
+        async def generate(messages):
+            raw = await self.ainvoke(messages)
+            try:
+                parsed, error = schema.model_validate_json(raw.content), None
+            except ValueError as exc:
+                parsed, error = None, exc
+            return {"raw": raw, "parsed": parsed, "parsing_error": error}
+
+        return RunnableLambda(generate)
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
         self.observed_messages.append(messages)

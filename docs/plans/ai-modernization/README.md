@@ -12,6 +12,12 @@ branch observations below remain historical inputs, not fresh acceptance evidenc
 
 ## Reading order
 
+For disabled LangChain engineering work, the
+[implementation-ready plan](10_LANGCHAIN_POC_IMPLEMENTATION_READY.md) revises the
+older G3 dependency: LC-PR01..04 may proceed in parallel with labels/baseline.
+[Current engineering evidence](../../reports/ai-eval/2026-10-15-langchain-poc.md)
+does not close G3 or permit comparative claims/production rollout.
+
 After the foundation merge, start with the
 [post-merge execution plan](09_POST_MERGE_AI_EXECUTION_PLAN.md) and
 [fresh merge-SHA evidence](../../reports/ai-eval/POST_MERGE_BASELINE.md), followed by

@@ -87,7 +87,7 @@ def test_full_four_tools_validate_quiz_and_write_once_for_parallel_duplicate():
     result = adapter.execute(REQUEST)
     notes.save_note.assert_called_once_with("A", "approved note")
     assert len(result.tool_calls) == 5 and all(
-        call.validation == "valid" for call in result.tool_calls
+        call.validation == "validated" for call in result.tool_calls
     )
     assert len(result.retrieval_calls) == 2 and len(result.evidences) == 1
     assert result.usage is None  # Main model or nested quiz usage unknown.
@@ -152,7 +152,7 @@ def test_uncertain_write_failure_is_reserved_and_never_retried():
     notes.save_note.side_effect = RuntimeError("SECRET_STORAGE_URL")
     result = adapter.execute(REQUEST)
     notes.save_note.assert_called_once()
-    assert [call.validation for call in result.tool_calls] == ["failed", "valid"]
+    assert [call.validation for call in result.tool_calls] == ["failed", "validated"]
     assert "SECRET_STORAGE_URL" not in str(model.observed_messages)
     assert "write_not_retried" in str(model.observed_messages)
 

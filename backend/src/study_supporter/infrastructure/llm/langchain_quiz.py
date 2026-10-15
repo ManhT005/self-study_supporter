@@ -1,5 +1,8 @@
 """One bounded native schema request, validated by the existing quiz domain model."""
 
+import asyncio
+from contextlib import suppress
+
 from study_supporter.domain.assessment import QuizList
 from study_supporter.domain.errors import QuotaExceeded
 from study_supporter.domain.provider_errors import ProviderAuthenticationError, ProviderUnavailable
@@ -10,6 +13,7 @@ class NativeQuizGenerator:
         self.model_factory = model_factory
 
     async def generate(self, content, num_questions, telemetry):
+        model = None
         try:
             model = self.model_factory()
             structured = model.with_structured_output(
@@ -35,6 +39,11 @@ class NativeQuizGenerator:
             if status == 429:
                 raise QuotaExceeded("Native quiz quota exceeded") from None
             raise ProviderUnavailable("Native quiz provider unavailable") from None
+        finally:
+            cleanup = getattr(self.model_factory, "aclose", None)
+            if model is not None and cleanup is not None:
+                with suppress(Exception):
+                    await asyncio.wait_for(cleanup(model), timeout=1)
         telemetry.usages.append(getattr(result.get("raw"), "usage_metadata", None))
         if result.get("parsing_error") is not None or result.get("parsed") is None:
             raise ValueError("Invalid structured quiz")

@@ -10,6 +10,7 @@ from scripts.langchain_fixtures import ScriptedNativeModel, capability_model, na
 from study_supporter.domain.provider_errors import ProviderUnavailable
 from study_supporter.infrastructure.llm.langchain_bridge import (
     NativeModelConfig,
+    create_native_model,
     probe_native_model,
     validated_model_factory,
 )
@@ -55,3 +56,20 @@ def test_probe_cancels_at_deadline():
 def test_unpinned_provider_configuration_is_rejected(provider, model):
     with pytest.raises(ValueError):
         NativeModelConfig(provider, model)
+
+
+def test_gemini_bridge_disables_sdk_retries_without_network(monkeypatch):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    from google.genai._api_client import retry_args
+    from google.genai.types import HttpRetryOptions
+    import langchain_google_genai
+
+    constructor = Mock(return_value=object())
+    monkeypatch.setattr(langchain_google_genai, "ChatGoogleGenerativeAI", constructor)
+    create_native_model(NativeModelConfig("gemini", "gemini-2.5-flash-lite", api_key="test-only"))
+    attempts = constructor.call_args.kwargs["max_retries"]
+    assert attempts == 1
+    stop = retry_args(HttpRetryOptions(attempts=attempts))["stop"]
+    assert stop(SimpleNamespace(attempt_number=1)) is True

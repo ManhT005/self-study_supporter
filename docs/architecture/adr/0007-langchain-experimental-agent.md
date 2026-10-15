@@ -18,7 +18,8 @@ approval still block comparative claims and production enablement.
 | --- | --- | --- |
 | Offline structured double | BaseChatModel + create_agent | Deterministic native multi-call/roundtrip tests; no provider quality claim |
 | Ollama qwen2.5:1.5b (existing default) | ChatOllama 1.1.0 | Candidate only; unavailable until explicit endpoint/model probe passes |
-| Gemini gemini-2.5-flash-lite | ChatGoogleGenerativeAI 4.0.0 | Candidate only; unavailable until explicit model probe passes |
+| Gemini gemini-3.1-flash-lite (existing live harness) | ChatGoogleGenerativeAI 4.0.0 | Candidate only; unavailable until explicit model probe passes |
+| Gemini gemini-3-flash-preview (legacy client default) | ChatGoogleGenerativeAI 4.0.0 | Unprobed; never selected automatically |
 | Legacy LLMAdapter.chat / OpenAI-compatible text adapters | None | Unsupported for native dispatch; no Action/JSON/regex fallback |
 | auto / unknown provider / mismatched capability receipt | None | Rejected before native model construction |
 
@@ -31,7 +32,7 @@ Run `python -m scripts.langchain_probe` offline. Manual live examples:
 
 ```powershell
 python -m scripts.langchain_probe --live --provider ollama --model qwen2.5:1.5b
-python -m scripts.langchain_probe --live --provider gemini --model gemini-2.5-flash-lite
+python -m scripts.langchain_probe --live --provider gemini --model gemini-3.1-flash-lite
 ```
 
 No dotenv loading, model auto-selection or fallback. Cloud credentials must be

@@ -1,6 +1,21 @@
 # Incremental implementation status — 2026-10-14
 
-## Current post-merge execution
+## LangChain engineering experiment (2026-10-15)
+
+PR #19 is merged in develop at `155fd76`. Branch `feature/langchain-agent-poc`
+implements optional native model bridges, a request-local AgentPort adapter,
+four typed tools, approval/idempotency protection and isolated smoke/CI coverage.
+Legacy ReAct remains the default. See the
+[implementation-ready plan](10_LANGCHAIN_POC_IMPLEMENTATION_READY.md),
+[ADR](../../architecture/adr/0007-langchain-experimental-agent.md) and
+[actual validation report](../../reports/ai-eval/2026-10-15-langchain-poc.md).
+
+The revised dependency allows disabled engineering work before G3. Comparative
+LC-PR05, live provider acceptance, independent Tech/Test Lead signoff and production
+release remain pending. The following post-merge status describes the earlier
+evaluation branch and its original dependency interpretation.
+
+## Historical post-merge evaluation execution
 
 Current branch: `feature/ai-online-eval-baseline`, based on merged `develop`
 `79224d718ce154fbb1a2222fc9c5955e64ae4480`. The

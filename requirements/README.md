@@ -26,3 +26,6 @@ uv pip compile backend/pyproject.toml --extra langchain --constraint requirement
 
 Install with `python -m pip install -r requirements/langchain.txt`. Gemini's
 integration stays on 4.0.0 to preserve the existing google-genai 1.56.0 pin.
+After installing dev/API requirements and the editable backend, run
+`python -m scripts.langchain_probe` and `python -m scripts.langchain_smoke`.
+Both commands default to offline fixtures and require no provider credentials.

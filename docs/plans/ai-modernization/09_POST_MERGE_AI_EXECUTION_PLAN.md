@@ -370,7 +370,7 @@ docs/architecture/adr/langchain-native-tool-poc.md
 | G1: trusted data | AI/QA | **Not started** | annotation & split manifest |
 | G2: live harness isolation | Backend/QA | **Not started** | real adapter tests + fixture logs |
 | G3: Phase 1 acceptance | Tech/Test Lead | **BLOCKED by G1/G2** | benchmark + human review + decision |
-| G4: LangChain POC | AI Lead | **BLOCKED by G3** | capability matrix + security tests |
+| G4: LangChain POC | AI Lead | **Disabled engineering work allowed before G3; rollout gated** | [Revised dependency and implementation](10_LANGCHAIN_POC_IMPLEMENTATION_READY.md) |
 | G5: LangChain decision | Tech/Test Lead | **BLOCKED by G4** | paired deltas + ADR |
 | UI production cutover | Maintainer/Ops | **Separate gate, still open** | real-provider, restore, rollback, phone checks |
 

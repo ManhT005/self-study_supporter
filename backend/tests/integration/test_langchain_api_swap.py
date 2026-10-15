@@ -64,3 +64,33 @@ def test_real_http_swap_scoped_retrieval_and_legacy_rollback(tmp_path):
         legacy = client.post(path, json={"question": "First sentence?"})
         assert legacy.status_code == 200 and set(legacy.json()) == set(payload)
         assert len(models) == 1
+
+
+def test_offline_smoke_uses_no_network_even_with_inherited_tracing_enabled(monkeypatch):
+    import socket
+    import sys
+
+    from scripts.langchain_smoke import run_smoke
+
+    original_connect = socket.socket.connect
+
+    def deny_network(sock, address):
+        caller = sys._getframe(1)
+        # Windows asyncio implements its internal wakeup socketpair via loopback.
+        # Only stdlib's socketpair construction may connect; providers remain blocked.
+        if (
+            sys.platform == "win32"
+            and caller.f_code.co_name == "_fallback_socketpair"
+            and caller.f_globals.get("__name__") == "socket"
+        ):
+            return original_connect(sock, address)
+        raise AssertionError("Offline fixture attempted external network access")
+
+    monkeypatch.setattr(socket.socket, "connect", deny_network)
+    monkeypatch.setenv("LANGSMITH_TRACING", "true")
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "true")
+    for key in ["GEMINI_API_KEY", "GOOGLE_API_KEY", "LANGSMITH_API_KEY", "LANGCHAIN_API_KEY"]:
+        monkeypatch.delenv(key, raising=False)
+    result = run_smoke()
+    assert result["status"] == "passed" and result["authorized_writes"] == 1
+    assert result["foreign_evidences"] == 0 and result["legacy_default"]

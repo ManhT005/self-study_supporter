@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+from contextlib import suppress
 from dataclasses import dataclass, field
 
 from study_supporter.domain.provider_errors import ProviderUnavailable
@@ -70,7 +71,9 @@ def create_native_model(config: NativeModelConfig):
             temperature=0,
             max_output_tokens=config.max_output_tokens,
             timeout=config.timeout_seconds,
-            max_retries=0,
+            # In google-genai 1.56, attempts=0 selects the default five attempts.
+            # The LangChain field is forwarded as total attempts, so 1 means no retry.
+            max_retries=1,
         )
     except ImportError:
         raise ProviderUnavailable("Install the optional LangChain requirements") from None
@@ -80,7 +83,36 @@ def validated_model_factory(config: NativeModelConfig, capability: NativeCapabil
     """The receipt must come from a manual probe of this exact endpoint/model."""
     if capability.identity != config.identity or not capability.available:
         raise ProviderUnavailable("Native tool calling is unavailable for this configuration")
-    return lambda: create_native_model(config)
+    return NativeModelFactory(config)
+
+
+@dataclass(frozen=True)
+class NativeModelFactory:
+    config: NativeModelConfig
+
+    def __call__(self):
+        return create_native_model(self.config)
+
+    async def aclose(self, model):
+        await close_native_model(model)
+
+
+async def close_native_model(model):
+    """Release request-owned clients using the pinned provider integrations."""
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    from langchain_ollama import ChatOllama
+
+    if isinstance(model, ChatOllama):
+        with suppress(Exception):
+            await model._async_client._client.aclose()
+        with suppress(Exception):
+            model._client._client.close()
+    elif isinstance(model, ChatGoogleGenerativeAI) and model.client is not None:
+        with suppress(Exception):
+            await model.client.aio.aclose()
+        with suppress(Exception):
+            model.client.close()
+        model.client = None
 
 
 async def probe_native_model(model, config: NativeModelConfig) -> NativeCapability:

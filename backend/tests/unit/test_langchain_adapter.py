@@ -1,7 +1,7 @@
 import asyncio
 import json
 from dataclasses import asdict
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -65,7 +65,7 @@ def test_native_tools_scoped_deduplicated_and_request_local():
         query = entry.args[0]
         assert query.user_id == "A" and query.document_ids == ("doc-a",)
     progress.execute.assert_called_once_with(CONTEXT)
-    assert all(call.validation == "valid" for call in result.tool_calls)
+    assert all(call.validation == "validated" for call in result.tool_calls)
     assert result.usage is result.abstained is None
     second = execute(adapter)
     assert not second.evidences and second.trace_id != result.trace_id
@@ -235,3 +235,34 @@ def test_usage_only_when_observed_for_every_model_call_and_reasoning_is_filtered
     result = execute(adapter)
     assert result.answer == "Answer" and result.usage.input_tokens == 10
     assert result.usage.cost_usd is None
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_request_owned_model_is_closed_after_success_or_provider_failure(failure):
+    model = ScriptedNativeModel(
+        responses=[RuntimeError("secret") if failure else AIMessage(content="Answer")]
+    )
+    factory = Mock(return_value=model)
+    factory.aclose = AsyncMock()
+    adapter, _, _, _ = make_adapter([AIMessage(content="unused")])
+    adapter.model_factory = factory
+    if failure:
+        with pytest.raises(ProviderUnavailable):
+            execute(adapter)
+    else:
+        execute(adapter)
+    factory.aclose.assert_awaited_once_with(model)
+
+
+def test_partially_observed_usage_remains_unknown():
+    adapter, _, _, _ = make_adapter(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[native_call("search_docs", {"query": "x"})],
+                usage_metadata={"input_tokens": 10, "output_tokens": 2, "total_tokens": 12},
+            ),
+            AIMessage(content="Answer"),
+        ]
+    )
+    assert execute(adapter).usage is None

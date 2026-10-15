@@ -2,6 +2,7 @@
 
 import asyncio
 import uuid
+from contextlib import suppress
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import AgentMiddleware
@@ -64,7 +65,7 @@ class SafeExecution(AgentMiddleware):
             self.budget.take_action()
             call = request.tool_call
             name = call["name"] if call["name"] in self.schemas else "unknown_tool"
-            validation = "valid"
+            validation = "validated"
             try:
                 if name == "unknown_tool":
                     raise ValueError
@@ -133,6 +134,7 @@ class LangChainAgentAdapter:
         telemetry, budget = Telemetry(), ExecutionBudget(self.policy)
         status = AgentStatus.COMPLETED
         answer = "The tool action budget was exhausted. Please narrow the question."
+        model = None
         try:
             async with asyncio.timeout(self.policy.timeout_seconds):
                 model = self.model_factory()
@@ -185,6 +187,11 @@ class LangChainAgentAdapter:
             raise
         except Exception:
             raise ProviderUnavailable("Native agent unavailable") from None
+        finally:
+            cleanup = getattr(self.model_factory, "aclose", None)
+            if model is not None and cleanup is not None:
+                with suppress(Exception):
+                    await asyncio.wait_for(cleanup(model), timeout=1)
         return AgentResult(
             answer=answer,
             evidences=tuple(telemetry.evidences.values()),

@@ -8,6 +8,7 @@ from dataclasses import asdict
 
 from study_supporter.infrastructure.llm.langchain_bridge import (
     NativeModelConfig,
+    close_native_model,
     create_native_model,
     probe_native_model,
 )
@@ -35,7 +36,15 @@ def main():
 
         config = NativeModelConfig("ollama", "offline-fixture:1")
         model = capability_model()
-    receipt = asyncio.run(probe_native_model(model, config))
+
+    async def run():
+        try:
+            return await probe_native_model(model, config)
+        finally:
+            if args.live:
+                await close_native_model(model)
+
+    receipt = asyncio.run(run())
     print(json.dumps({"mode": "live" if args.live else "offline", **asdict(receipt)}))
     return 0 if receipt.available else 1
 

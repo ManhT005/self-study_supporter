@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from pathlib import Path
 
 import pytest
 
@@ -7,6 +8,8 @@ pytest.importorskip("langchain")
 from langchain_core.messages import AIMessage
 
 from scripts.langchain_fixtures import ScriptedNativeModel, native_call
+from evaluation.schema import load_dataset
+from evaluation.scoring import score_result
 from study_supporter.application.contracts.agent import AgentResult, AgentStatus
 from study_supporter.application.contracts.context import AppContext
 from study_supporter.application.contracts.learning import AnswerRequest
@@ -48,6 +51,11 @@ def test_agent_variants_share_core_result_and_answer_contract(variant):
     assert result.evidences == (evidence,) and result.answer == "supported"
     assert result.usage is result.abstained is None
     assert result.retrieval_calls[0].chunk_ids == ("one",)
+    case = load_dataset(Path(__file__).resolve().parents[3] / "evaluation/datasets/v1/smoke.jsonl")[
+        0
+    ]
+    scores = score_result(case, result, 3, tool_capable=True)
+    assert scores["tool_validation_rate"] == (1.0 if variant == "langchain" else None)
     # Recreate the request-local agent to exercise the unchanged use case.
     if variant == "legacy":
         llm.chat.side_effect = [ChatResponse("Final Answer: supported")]
