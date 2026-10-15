@@ -11,6 +11,7 @@ from pydantic import Field
 
 class ScriptedNativeModel(BaseChatModel):
     responses: list[Any] = Field(default_factory=list)
+    observed_messages: list[Any] = Field(default_factory=list, exclude=True)
     cursor: int = 0
     delay_seconds: float = 0
 
@@ -22,6 +23,7 @@ class ScriptedNativeModel(BaseChatModel):
         return self
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        self.observed_messages.append(messages)
         response = self.responses[min(self.cursor, len(self.responses) - 1)]
         self.cursor += 1
         if isinstance(response, Exception):
