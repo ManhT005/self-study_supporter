@@ -16,3 +16,13 @@ uv pip compile backend/pyproject.toml --extra runtime --python-version 3.11 --py
 
 Review any version changes and rerun the offline suite and Docker build. Moving
 these files does not authorize changing runtime versions or stored embeddings.
+
+`langchain.txt` is an optional experiment overlay, constrained by the existing
+dev/API locks. It is never installed by production images. Regenerate with:
+
+```powershell
+uv pip compile backend/pyproject.toml --extra langchain --constraint requirements/dev.txt --constraint requirements/api.txt --python-version 3.11 --output-file requirements/langchain.txt
+```
+
+Install with `python -m pip install -r requirements/langchain.txt`. Gemini's
+integration stays on 4.0.0 to preserve the existing google-genai 1.56.0 pin.
