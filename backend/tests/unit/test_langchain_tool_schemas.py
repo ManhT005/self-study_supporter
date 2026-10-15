@@ -1,7 +1,12 @@
 import pytest
 from pydantic import ValidationError
 
-from study_supporter.orchestration.langchain_agent.models import ProgressInput, SearchInput
+from study_supporter.orchestration.langchain_agent.models import (
+    ProgressInput,
+    QuizInput,
+    SaveNoteInput,
+    SearchInput,
+)
 
 
 @pytest.mark.parametrize(
@@ -28,3 +33,34 @@ def test_search_defaults_and_empty_progress_schema():
     assert ProgressInput.model_json_schema()["properties"] == {}
     with pytest.raises(ValidationError):
         ProgressInput(user_id="B")
+
+
+@pytest.mark.parametrize(
+    "schema,args",
+    [
+        (QuizInput, {"topic": " "}),
+        (QuizInput, {"topic": "x", "num_questions": 0}),
+        (QuizInput, {"topic": "x", "num_questions": 16}),
+        (QuizInput, {"topic": "x", "correct_answer_index": 0}),
+        (SaveNoteInput, {"note": " "}),
+        (SaveNoteInput, {"note": "x" * 4001}),
+        (SaveNoteInput, {"note": "x", "confirmed": True}),
+        (SaveNoteInput, {"note": "x", "user_id": "B"}),
+        (SaveNoteInput, {"note": "x", "operation_id": ""}),
+    ],
+)
+def test_quiz_and_note_boundaries(schema, args):
+    with pytest.raises(ValidationError):
+        schema.model_validate(args)
+
+
+def test_only_safe_model_editable_fields_are_exposed():
+    allowed = {
+        SearchInput: {"query", "top_k"},
+        ProgressInput: set(),
+        QuizInput: {"topic", "num_questions"},
+        SaveNoteInput: {"note", "operation_id"},
+    }
+    for schema, fields in allowed.items():
+        assert set(schema.model_json_schema()["properties"]) == fields
+        assert schema.model_json_schema()["additionalProperties"] is False

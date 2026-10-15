@@ -18,3 +18,13 @@ class SearchInput(ToolInput):
 
 class ProgressInput(ToolInput):
     pass
+
+
+class QuizInput(ToolInput):
+    topic: Query
+    num_questions: int = Field(default=1, ge=1, le=15)
+
+
+class SaveNoteInput(ToolInput):
+    note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
+    operation_id: Annotated[str, StringConstraints(min_length=1, max_length=100)] | None = None

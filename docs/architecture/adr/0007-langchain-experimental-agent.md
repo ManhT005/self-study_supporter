@@ -56,3 +56,34 @@ LegacyReActAdapter. No data restoration or migration is necessary.
 References: [agents](https://docs.langchain.com/oss/python/langchain/agents),
 [Ollama](https://docs.langchain.com/oss/python/integrations/chat/ollama),
 [Gemini](https://docs.langchain.com/oss/python/integrations/chat/google_generative_ai).
+
+## Quiz and note side effects
+
+Read-only composition exposes two tools. Explicit `learning_tools=True` adds
+generate_quiz and save_note; it does not approve writes. Quiz content must come
+from the authorized retrieval use case, with four-option/index validation using
+the existing QuizList/QuizQuestion domain schemas and an exact count check. A
+NativeQuizGenerator makes one additional schema request to the explicitly chosen
+native model, counted in the total model-call and time budget. The observation
+contains only questions/options, excluding the answer key and explanation.
+
+save_note denies by default. A trusted fixture/operator must supply a separately
+confirmed ConfirmedNoteWrite grant bound to AppContext, the exact question hash,
+normalized note hash, operation ID and five-minute expiry. No HTTP input or model
+field can issue approval. The same grant object must be reused for operation
+retries. It serializes and reserves the write **before** SaveNoteUseCase IO, so an
+ambiguous failure is never automatically retried. Receipts contain only status,
+without account, note text or storage ID. This is in-memory idempotency for one
+explicit fixture operation, not crash-safe or distributed idempotency.
+
+Native tool batches execute business actions sequentially. Read-only IO uses
+cancellable waits; an abandoned read cannot publish late evidence. Writes run
+synchronously only against bounded isolated fixture repositories: Python cannot
+cancel an already committing synchronous database/vector operation. Production
+writes remain disabled, and would require a persistent approval/idempotency
+workflow plus transactional deadlines before a separate release decision.
+
+All tool errors, including detailed errors internally returned by LangChain's
+ToolNode, are replaced before the next model turn. External LangSmith tracing is
+disabled inside the execution context. Provider errors map to the existing safe
+authentication/quota/unavailable HTTP boundary without model fallback.

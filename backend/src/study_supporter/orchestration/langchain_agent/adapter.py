@@ -18,6 +18,7 @@ from study_supporter.orchestration.langchain_agent.policy import (
     BudgetExhausted,
     ExecutionBudget,
     ExecutionPolicy,
+    NoteWriteDenied,
 )
 from study_supporter.orchestration.langchain_agent.telemetry import Telemetry
 from study_supporter.orchestration.langchain_agent.tools import build_tools
@@ -76,7 +77,21 @@ class SafeExecution(AgentMiddleware):
             else:
                 try:
                     result = await handler(request)
+                    # ToolNode can turn internal Pydantic failures into detailed
+                    # error messages. Replace those before the model sees them.
+                    if isinstance(result, ToolMessage) and result.status == "error":
+                        validation = "failed"
+                        result = ToolMessage(
+                            content='{"error":"tool_unavailable"}', tool_call_id=call["id"]
+                        )
                 except (BudgetExhausted, TimeoutError):
+                    raise
+                except NoteWriteDenied:
+                    validation = "denied"
+                    result = ToolMessage(
+                        content='{"error":"write_not_approved"}', tool_call_id=call["id"]
+                    )
+                except (ProviderAuthenticationError, QuotaExceeded, ProviderUnavailable):
                     raise
                 except Exception:
                     validation = "failed"
@@ -88,10 +103,24 @@ class SafeExecution(AgentMiddleware):
 
 
 class LangChainAgentAdapter:
-    def __init__(self, context, retriever, *, model_factory, progress, policy=None):
+    def __init__(
+        self,
+        context,
+        retriever,
+        *,
+        model_factory,
+        progress,
+        policy=None,
+        quiz_generator=None,
+        notes=None,
+        approval_factory=None,
+        learning_tools=False,
+    ):
         self.context, self.retriever = context, retriever
         self.model_factory, self.progress = model_factory, progress
         self.policy = policy or ExecutionPolicy()
+        self.quiz_generator, self.notes = quiz_generator, notes
+        self.approval_factory, self.learning_tools = approval_factory, learning_tools
 
     def execute(self, request):
         return asyncio.run(self.aexecute(request))
@@ -110,7 +139,17 @@ class LangChainAgentAdapter:
                 if not isinstance(model, BaseChatModel):
                     raise ProviderUnavailable("Native chat model required")
                 tools = build_tools(
-                    self.context, self.retriever, self.progress, telemetry, self.policy
+                    self.context,
+                    self.retriever,
+                    self.progress,
+                    telemetry,
+                    self.policy,
+                    request=request,
+                    budget=budget,
+                    quiz_generator=self.quiz_generator,
+                    notes=self.notes,
+                    approval=self.approval_factory(request) if self.approval_factory else None,
+                    learning_tools=self.learning_tools,
                 )
                 graph = create_agent(
                     model,
@@ -161,8 +200,20 @@ class LangChainAgentAdapter:
 class LangChainAgentFactory:
     """Pass explicitly as ApplicationFactory(agent_factory=...). Never a settings default."""
 
-    def __init__(self, model_factory, progress, policy=None):
+    def __init__(
+        self,
+        model_factory,
+        progress,
+        policy=None,
+        *,
+        quiz_generator=None,
+        notes=None,
+        approval_factory=None,
+        learning_tools=False,
+    ):
         self.model_factory, self.progress, self.policy = model_factory, progress, policy
+        self.quiz_generator, self.notes = quiz_generator, notes
+        self.approval_factory, self.learning_tools = approval_factory, learning_tools
 
     def __call__(self, context, llm, retriever, tools_factory):
         # Native services are explicitly injected, not cast from text/legacy adapters.
@@ -172,4 +223,8 @@ class LangChainAgentFactory:
             model_factory=self.model_factory,
             progress=self.progress,
             policy=self.policy,
+            quiz_generator=self.quiz_generator,
+            notes=self.notes,
+            approval_factory=self.approval_factory,
+            learning_tools=self.learning_tools,
         )
