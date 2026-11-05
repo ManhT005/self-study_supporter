@@ -1,3 +1,4 @@
+from study_supporter.application.telemetry import timed
 import hashlib
 import uuid
 from threading import Lock
@@ -30,6 +31,7 @@ class IngestDocumentUseCase:
         self._locks = WeakValueDictionary()
         self._registry = Lock()
 
+    @timed("ingestion")
     def execute(self, request: IngestDocumentRequest, on_progress=None) -> DocumentResult:
         trace = uuid.uuid4().hex
         user = request.context.user_id
