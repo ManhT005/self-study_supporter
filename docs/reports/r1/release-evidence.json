@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "release": "R1",
+  "work_package": "WP-01",
+  "srs": "SSS-SRS-001@v1.0",
+  "commit_sha": null,
+  "environment": null,
+  "image_digests": [],
+  "model_versions": [],
+  "index_versions": [],
+  "dataset_manifest_sha256": null,
+  "fixture": null,
+  "test_runs": [],
+  "ci_run_urls": [],
+  "reviewer": null,
+  "result": "HOLD",
+  "quality_report": null,
+  "security_report": "THREAT_MODEL.md",
+  "restore_report": null,
+  "rollback_report": null,
+  "open_defects": [],
+  "gates": {
+    "G0": "HOLD",
+    "G1": "HOLD",
+    "G2": "HOLD",
+    "G3": "HOLD",
+    "G4": "HOLD",
+    "G5": "DEFER",
+    "G6": "HOLD",
+    "G7": "HOLD"
+  },
+  "uat_results": {
+    "passed": 0,
+    "failed": 0,
+    "blocked": 26
+  },
+  "po_decision": "HOLD",
+  "blockers": [
+    "WP-02 safety hardening pending",
+    "Independent QA/Tech Lead G0 review pending",
+    "Exact candidate hosted CI pending",
+    "Real provider/PDF profile pending; synthetic results are not SLO or AI quality acceptance",
+    "100 independently reviewed benchmark cases and holdout pending",
+    "Full source and plan retained privately; public disclosure approval pending, authorized source review still required"
+  ]
+}
