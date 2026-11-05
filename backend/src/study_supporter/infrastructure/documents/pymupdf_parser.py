@@ -1,3 +1,4 @@
+from study_supporter.application.telemetry import timed
 import os
 import tempfile
 from pathlib import Path
@@ -19,6 +20,7 @@ class ParseResult:
 
 
 class PdfParser:
+    @timed("pdf_parse")
     def parse(self, filename, content, on_progress=None):
         with tempfile.TemporaryDirectory(prefix="study-upload-") as directory:
             path = Path(directory) / "upload.pdf"
