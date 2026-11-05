@@ -38,6 +38,15 @@ jobs:
           name: synthetic-ai-evaluation
           path: data/evaluations/
       - run: python scripts/check_import_boundaries.py
+      - name: Verify approved R1 baseline and requirement coverage
+        run: python -m scripts.verify_r1_baseline
+      - name: Measure synthetic R1 baseline on candidate SHA
+        run: python -m scripts.profile_r1_baseline --repetitions 5
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r1-baseline-profile
+          path: data/r1/
       - run: python -m build --no-isolation ./backend
       - name: Import built wheel away from repository
         run: |
