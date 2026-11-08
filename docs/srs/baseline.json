@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "srs": "SSS-SRS-001@v1.0",
+  "approval": {
+    "status": "PO-approved-functional-content",
+    "date": "2026-11-05",
+    "evidence": "Product Owner approval and current implementation request; release acceptance is separate"
+  },
+  "source": {
+    "filename": "SRS_Self_Study_Supporter_v1.0.docx",
+    "sha256": "4b8efb09ec54f187efe1608dbcc05005d01ff4190d125a7af423a50c8761f658",
+    "size_bytes": 710337,
+    "location": "User-supplied project source attachment; original bytes unchanged"
+  },
+  "code_baseline_sha": "155fd76c062491254da8b463f8ed3e88e597ded0",
+  "baseline_ci": {
+    "status": "success",
+    "run_id": 38580852308,
+    "event": "push",
+    "ci_run_urls": [
+      "https://github.com/ManhT005/self-study_supporter/actions/runs/38580852308"
+    ],
+    "head_sha": "155fd76c062491254da8b463f8ed3e88e597ded0",
+    "note": "Fetched from workflow-runs endpoint; success belongs to the develop baseline, not this candidate."
+  },
+  "http_v1_snapshot": {
+    "path": "docs/api/runtime-openapi.json",
+    "sha256": "2f8e7af469b2c9a7eebb71b14c4ca773313c69a400fda575b8076b9efb0281d6",
+    "baseline_sha": "155fd76c062491254da8b463f8ed3e88e597ded0"
+  },
+  "assets": [
+    {
+      "path": "docs/srs/requirements.json",
+      "sha256": "02e48de0c75fe22b836908cc537765671c54f07f89a2b920b78a57de5c9ae06e"
+    }
+  ],
+  "change_control": "Frozen assets require CR-ID, before/after, affected requirements, QA evidence and PO approval. Add implementation evidence outside the immutable requirement registry.",
+  "private_source_checksums": [
+    {
+      "filename": "SSS-SRS-001_v1.0.md",
+      "sha256": "92628634848311ad2b49d81590dbf627ecb4511684175799e92585ec4d46d933"
+    },
+    {
+      "filename": "IMPLEMENTATION_PLAN.md",
+      "sha256": "6cb3108ff2e1befe03ea44d7dd1752e7b2822aa8e1f558ccf1cc116f717aa257"
+    }
+  ],
+  "publication_status": "Full source and plan withheld from public GitHub pending explicit disclosure approval. SHA-256 records allow authorized private-source verification."
+}

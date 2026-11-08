@@ -2,6 +2,8 @@
 
 from threading import RLock
 
+from study_supporter.application.telemetry import timed
+
 from study_supporter.config import Settings
 from study_supporter.application.contracts.context import AppContext
 from study_supporter.application.ports.agent import AgentFactory, AgentToolsFactory
@@ -30,6 +32,7 @@ class SharedEmbedding:
         self._provider = None
         self._lock = RLock()
 
+    @timed("embedding")
     def embed(self, texts, task_type):
         from study_supporter.domain.errors import EmbeddingUnavailable
         from study_supporter.infrastructure.embeddings.providers import LocalEmbeddingProvider
@@ -134,6 +137,7 @@ class ApplicationFactory:
         )
         return AnswerQuestionUseCase(agent, context)
 
+    @timed("open_document")
     def open_document(self, context, document_id=None, mode="auto"):
         from study_supporter.application.contracts.context import AppContext
         from study_supporter.application.use_cases.learning import (

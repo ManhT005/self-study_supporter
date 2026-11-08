@@ -1,3 +1,4 @@
+from study_supporter.application.telemetry import timed
 from study_supporter.application.contracts.retrieval import Evidence
 from study_supporter.domain.errors import EmbeddingUnavailable
 from study_supporter.infrastructure.retrieval.bm25_adapter import BM25Index
@@ -9,6 +10,7 @@ class ScopedHybridRetriever:
         self.documents, self.vectors, self.embeddings = documents, vectors, embeddings
         self._indexes = {}
 
+    @timed("retrieval")
     def retrieve(self, query):
         results = []
         for doc_id in query.document_ids:

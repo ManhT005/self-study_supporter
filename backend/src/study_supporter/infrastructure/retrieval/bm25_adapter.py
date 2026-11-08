@@ -1,7 +1,9 @@
+from study_supporter.application.telemetry import timed
 from study_supporter.domain.documents import Chunk
 
 
 class BM25Index:
+    @timed("bm25_build")
     def __init__(self, chunks: list[Chunk]):
         from rank_bm25 import BM25Okapi
         # TODO: tokenize text của từng chunk (đơn giản: .lower().split())

@@ -1,3 +1,4 @@
+from study_supporter.application.telemetry import timed
 import os
 
 from study_supporter.domain.documents import Chunk
@@ -64,6 +65,7 @@ class VectorStore:
     def count(self) -> int:
         return self.documents.count()
 
+    @timed("load_all_chunks")
     def load_all_chunks(self) -> list[Chunk]:
         data = self.documents.get(include=["documents", "metadatas"])
         chunks = []

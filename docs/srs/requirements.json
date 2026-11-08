@@ -1,0 +1,1795 @@
+{
+  "srs": "SSS-SRS-001@v1.0",
+  "counts": {
+    "FR": 96,
+    "BR": 34,
+    "NFR": 28,
+    "UAT": 26,
+    "UC": 14
+  },
+  "requirements": [
+    {
+      "id": "BR-01",
+      "category": "BR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-02",
+      "category": "BR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-03",
+      "category": "BR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-04",
+      "category": "BR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-05",
+      "category": "BR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-06",
+      "category": "BR",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-07",
+      "category": "BR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-08",
+      "category": "BR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-09",
+      "category": "BR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-10",
+      "category": "BR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-11",
+      "category": "BR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-12",
+      "category": "BR",
+      "work_package": "WP-02",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-13",
+      "category": "BR",
+      "work_package": "WP-02",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-14",
+      "category": "BR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-15",
+      "category": "BR",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-16",
+      "category": "BR",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-17",
+      "category": "BR",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-18",
+      "category": "BR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-19",
+      "category": "BR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-20",
+      "category": "BR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-21",
+      "category": "BR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-22",
+      "category": "BR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-23",
+      "category": "BR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-24",
+      "category": "BR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-25",
+      "category": "BR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-26",
+      "category": "BR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-27",
+      "category": "BR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-28",
+      "category": "BR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-29",
+      "category": "BR",
+      "work_package": "WP-09",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-30",
+      "category": "BR",
+      "work_package": "WP-21",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-31",
+      "category": "BR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-32",
+      "category": "BR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-33",
+      "category": "BR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "BR-34",
+      "category": "BR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUTH-01",
+      "category": "FR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUTH-02",
+      "category": "FR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUTH-03",
+      "category": "FR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUTH-04",
+      "category": "FR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUTH-05",
+      "category": "FR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUTH-06",
+      "category": "FR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-01",
+      "category": "FR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-02",
+      "category": "FR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-03",
+      "category": "FR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-04",
+      "category": "FR",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-05",
+      "category": "FR",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-06",
+      "category": "FR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-07",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-08",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-09",
+      "category": "FR",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-10",
+      "category": "FR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-11",
+      "category": "FR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-12",
+      "category": "FR",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-13",
+      "category": "FR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DOC-14",
+      "category": "FR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "JOB-01",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "JOB-02",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "JOB-03",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "JOB-04",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "JOB-05",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "JOB-06",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-01",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-02",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-03",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-04",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-05",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-06",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-07",
+      "category": "FR",
+      "work_package": "WP-02",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-08",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-09",
+      "category": "FR",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "TUT-10",
+      "category": "FR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-01",
+      "category": "FR",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-02",
+      "category": "FR",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-03",
+      "category": "FR",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-04",
+      "category": "FR",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-05",
+      "category": "FR",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-06",
+      "category": "FR",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-07",
+      "category": "FR",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-08",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-09",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-10",
+      "category": "FR",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-11",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-12",
+      "category": "FR",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "QUIZ-13",
+      "category": "FR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PRG-01",
+      "category": "FR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PRG-02",
+      "category": "FR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PRG-03",
+      "category": "FR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PRG-04",
+      "category": "FR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PRG-05",
+      "category": "FR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PRG-06",
+      "category": "FR",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PLN-01",
+      "category": "FR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PLN-02",
+      "category": "FR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PLN-03",
+      "category": "FR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PLN-04",
+      "category": "FR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PLN-05",
+      "category": "FR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "PLN-06",
+      "category": "FR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NOTE-01",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NOTE-02",
+      "category": "FR",
+      "work_package": "WP-02",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NOTE-03",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NOTE-04",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NOTE-05",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "HIS-01",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "HIS-02",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "HIS-03",
+      "category": "FR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "HIS-04",
+      "category": "FR",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NTF-01",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NTF-02",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NTF-03",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NTF-04",
+      "category": "FR",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NTF-05",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NTF-06",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-01",
+      "category": "FR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-02",
+      "category": "FR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-03",
+      "category": "FR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-04",
+      "category": "FR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-05",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-06",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-07",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "AUT-08",
+      "category": "FR",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DATA-01",
+      "category": "FR",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DATA-02",
+      "category": "FR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DATA-03",
+      "category": "FR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DATA-04",
+      "category": "FR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "DATA-05",
+      "category": "FR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "OPS-01",
+      "category": "FR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "OPS-02",
+      "category": "FR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "OPS-03",
+      "category": "FR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "OPS-04",
+      "category": "FR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "OPS-05",
+      "category": "FR",
+      "work_package": "WP-09",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "OPS-06",
+      "category": "FR",
+      "work_package": "WP-21",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "OPS-07",
+      "category": "FR",
+      "work_package": "WP-21",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-01",
+      "category": "NFR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-02",
+      "category": "NFR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-03",
+      "category": "NFR",
+      "work_package": "WP-02",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-04",
+      "category": "NFR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-05",
+      "category": "NFR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-06",
+      "category": "NFR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-07",
+      "category": "NFR",
+      "work_package": "WP-17",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-08",
+      "category": "NFR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-09",
+      "category": "NFR",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-10",
+      "category": "NFR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-11",
+      "category": "NFR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-12",
+      "category": "NFR",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-13",
+      "category": "NFR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-14",
+      "category": "NFR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-15",
+      "category": "NFR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-16",
+      "category": "NFR",
+      "work_package": "WP-01",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-17",
+      "category": "NFR",
+      "work_package": "WP-01",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-18",
+      "category": "NFR",
+      "work_package": "WP-21",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-19",
+      "category": "NFR",
+      "work_package": "WP-21",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-20",
+      "category": "NFR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-21",
+      "category": "NFR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-22",
+      "category": "NFR",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-23",
+      "category": "NFR",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-24",
+      "category": "NFR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-25",
+      "category": "NFR",
+      "work_package": "WP-09",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-26",
+      "category": "NFR",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-27",
+      "category": "NFR",
+      "work_package": "WP-19",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "NFR-28",
+      "category": "NFR",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-01",
+      "category": "UAT",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-02",
+      "category": "UAT",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-03",
+      "category": "UAT",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-04",
+      "category": "UAT",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-05",
+      "category": "UAT",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-06",
+      "category": "UAT",
+      "work_package": "WP-07",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-07",
+      "category": "UAT",
+      "work_package": "WP-06",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-08",
+      "category": "UAT",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-09",
+      "category": "UAT",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-10",
+      "category": "UAT",
+      "work_package": "WP-02",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-11",
+      "category": "UAT",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-12",
+      "category": "UAT",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-13",
+      "category": "UAT",
+      "work_package": "WP-04",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-14",
+      "category": "UAT",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-15",
+      "category": "UAT",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-16",
+      "category": "UAT",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-17",
+      "category": "UAT",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-18",
+      "category": "UAT",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-19",
+      "category": "UAT",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-20",
+      "category": "UAT",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-21",
+      "category": "UAT",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-22",
+      "category": "UAT",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-23",
+      "category": "UAT",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-24",
+      "category": "UAT",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-25",
+      "category": "UAT",
+      "work_package": "WP-21",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UAT-26",
+      "category": "UAT",
+      "work_package": "WP-09",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-01",
+      "category": "UC",
+      "work_package": "WP-03",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-02",
+      "category": "UC",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-03",
+      "category": "UC",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-04",
+      "category": "UC",
+      "work_package": "WP-11",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-05",
+      "category": "UC",
+      "work_package": "WP-12",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-06",
+      "category": "UC",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-07",
+      "category": "UC",
+      "work_package": "WP-13",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-08",
+      "category": "UC",
+      "work_package": "WP-14",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-09",
+      "category": "UC",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-10",
+      "category": "UC",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-11",
+      "category": "UC",
+      "work_package": "WP-18",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-12",
+      "category": "UC",
+      "work_package": "WP-05",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-13",
+      "category": "UC",
+      "work_package": "WP-08",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    },
+    {
+      "id": "UC-14",
+      "category": "UC",
+      "work_package": "WP-20",
+      "status": "PLANNED",
+      "test_paths": [],
+      "evidence": [],
+      "reviewer": null
+    }
+  ],
+  "source_access": "Full approved source is private; only IDs and package ownership are published."
+}

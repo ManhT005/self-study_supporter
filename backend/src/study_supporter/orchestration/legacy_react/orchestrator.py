@@ -1,6 +1,8 @@
 import ast
 import json
 import re
+
+from study_supporter.application.telemetry import timing
 from study_supporter.application.ports.llm import LLMAdapter
 from study_supporter.orchestration.legacy_react.state import AgentState
 from study_supporter.orchestration.legacy_react.prompt_templates import build_react_system_prompt
@@ -144,11 +146,12 @@ class ReActOrchestrator:
             if scratchpad_text:
                 user_content += f"\n\n{scratchpad_text}"
 
-            response = self.llm.chat(
-                [{"role": "user", "content": user_content}],
-                system_prompt=self.system_prompt,
-                stop_sequences=["Observation:"],
-            )
+            with timing("provider_generation"):
+                response = self.llm.chat(
+                    [{"role": "user", "content": user_content}],
+                    system_prompt=self.system_prompt,
+                    stop_sequences=["Observation:"],
+                )
 
             parsed = self.parse_llm_output(response.text)
 
@@ -171,7 +174,8 @@ class ReActOrchestrator:
                         f"Các tool khả dụng: {available}."
                     )
                 else:
-                    observation = tool.safe_run(**parsed["action_input"])
+                    with timing("tool_round"):
+                        observation = tool.safe_run(**parsed["action_input"])
 
                 state.add_observation(observation)
 
