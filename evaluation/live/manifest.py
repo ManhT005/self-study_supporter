@@ -16,7 +16,6 @@ def production_prompt_hash():
         RetrieveEvidenceTool,
     )
     from study_supporter.orchestration.legacy_react.tools.generate_quiz import GenerateQuizTool
-    from study_supporter.orchestration.legacy_react.tools.save_note import SaveNoteTool
     from study_supporter.orchestration.legacy_react.tools.get_progress import GetProgressTool
 
     prompt = ReActOrchestrator(
@@ -24,7 +23,6 @@ def production_prompt_hash():
         [
             RetrieveEvidenceTool(None, AppContext("fixture", ("fixture",))),
             GenerateQuizTool(None),
-            SaveNoteTool(None, "fixture"),
             GetProgressTool(None, "fixture"),
         ],
     ).system_prompt

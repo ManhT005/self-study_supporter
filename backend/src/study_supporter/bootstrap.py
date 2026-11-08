@@ -148,7 +148,6 @@ class ApplicationFactory:
         from study_supporter.application.use_cases.session import LearningSession
         from study_supporter.infrastructure.persistence.chroma.note_repository import LongTermMemory
         from study_supporter.orchestration.legacy_react.tools.generate_quiz import GenerateQuizTool
-        from study_supporter.orchestration.legacy_react.tools.save_note import SaveNoteTool
         from study_supporter.orchestration.legacy_react.tools.get_progress import GetProgressTool
 
         document = (
@@ -173,7 +172,6 @@ class ApplicationFactory:
         def tools_factory():
             return [
                 GenerateQuizTool(selection.client),
-                SaveNoteTool(notes, context.user_id),
                 GetProgressTool(progress, context.user_id),
             ]
 

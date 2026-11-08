@@ -97,7 +97,7 @@ def test_concurrent_request_scopes_do_not_mix_traces():
 
 def test_react_measures_provider_and_tool_without_changing_observations():
     llm, tool = Mock(), Mock()
-    tool.name, tool.description = "fixture_tool", "fixture"
+    tool.name, tool.description, tool.read_only = "fixture_tool", "fixture", True
     tool.get_schema.return_value = {"parameters": {"properties": {}}}
     tool.safe_run.return_value = "PRIVATE OBSERVATION"
     llm.chat.side_effect = [

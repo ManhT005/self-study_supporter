@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release": "R1",
-  "work_package": "WP-01",
+  "work_package": "WP-02",
   "srs": "SSS-SRS-001@v1.0",
   "commit_sha": null,
   "environment": null,
@@ -10,7 +10,9 @@
   "index_versions": [],
   "dataset_manifest_sha256": null,
   "fixture": null,
-  "test_runs": [],
+  "test_runs": [
+    "WP-02_VALIDATION.md"
+  ],
   "ci_run_urls": [],
   "reviewer": null,
   "result": "HOLD",
@@ -36,11 +38,10 @@
   },
   "po_decision": "HOLD",
   "blockers": [
-    "WP-02 safety hardening pending",
-    "Independent QA/Tech Lead G0 review pending",
-    "Exact candidate hosted CI pending",
-    "Real provider/PDF profile pending; synthetic results are not SLO or AI quality acceptance",
-    "100 independently reviewed benchmark cases and holdout pending",
-    "Full source and plan retained privately; public disclosure approval pending, authorized source review still required"
+    "WP-02 safety hardening awaits independent Security/QA review",
+    "Independent Tech Lead/QA G0 review and authorized SRS source review pending",
+    "Attach hosted CI and synthetic profile from the exact WP-02 candidate SHA",
+    "Approved real PDF/BGE-M3/provider baseline profile pending",
+    "G3 only: 100 independently reviewed benchmark cases and locked holdout pending"
   ]
 }

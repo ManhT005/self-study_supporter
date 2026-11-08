@@ -6,4 +6,4 @@ from study_supporter.domain.assessment import QuizQuestion as QuizQuestion, Quiz
 class GenerateQuizTool(GenerateQuizUseCase, BaseTool):
     """Compatibility tool: all generation/validation lives in the use case."""
 
-    pass
+    read_only = True

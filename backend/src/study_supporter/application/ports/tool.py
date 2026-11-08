@@ -14,6 +14,8 @@ PYTHON_TO_JSON_TYPE = {
 class BaseTool(ABC):
     name: str
     description: str
+    # Opt in only for tools that cannot persist learner state.
+    read_only: bool = False
 
     # Optional: tool con có thể override để mô tả rõ từng tham số,
     # giúp LLM hiểu đúng ý nghĩa tham số khi quyết định gọi tool (không chỉ dựa vào tên biến).

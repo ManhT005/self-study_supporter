@@ -5,6 +5,7 @@ from study_supporter.application.ports.tool import BaseTool
 
 class GetProgressTool(BaseTool):
     name = "get_progress"
+    read_only = True
     description = "Lấy tiến độ học tập hiện tại của học sinh (số quiz đã làm, điểm số trung bình, các chủ đề đã học)."
     param_descriptions = {}
 

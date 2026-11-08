@@ -17,7 +17,7 @@ hashes, Git SHA/dirty state, prompt digests, settings and environment accompany 
 ignored `data/evaluations/<run_id>/results.json`. Variant order is randomized with a
 fixed seed; each case/repetition is independent. The CLI uses a lexical retriever and
 an echo fixture with a **search-only** ReAct prompt. It checks contracts, pairing and
-scope denial; it does not benchmark the production four-tool agent or AI quality.
+scope denial; it does not benchmark the production agent or AI quality.
 See [dataset provenance and gaps](datasets/v1/README.md).
 
 `run_comparison(cases, variants, manifest)` accepts arbitrary callbacks returning the
