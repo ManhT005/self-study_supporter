@@ -1,8 +1,8 @@
 # Opt-in real-pipeline evaluation
 
 This tooling reuses `ApplicationFactory`, owned SQL access, BGE-M3/1024D,
-`ScopedHybridRetriever`/Dense+BM25+RRF, `RagOnlyAdapter` and the unchanged full
-four-tool `LegacyReActAdapter`. It introduces no application endpoint, orchestration
+`ScopedHybridRetriever`/Dense+BM25+RRF, `RagOnlyAdapter` and the production
+read-only `LegacyReActAdapter`. It introduces no application endpoint, orchestration
 flag, provider-selection change, schema migration to retained data or frontend change.
 Imports and mandatory tests never call a provider or download a model.
 
@@ -27,8 +27,8 @@ mount the application database/Chroma volumes writable or run `down -v`.
 Each callback verifies the immutable payload/corpus hash, clones SQL/Chroma to a
 distinct temporary directory and starts a separate subprocess. SQL ownership is
 checked before vectors/model access; process exit releases Chroma before cleanup.
-Notes/progress/tool writes affect only the clone; the source is verified again
-afterwards. Explicit progress fixtures are seeded per invocation; nonempty chat
+Explicit progress fixtures are seeded in the clone per invocation. The agent only
+receives read-only tools, and the source is verified again afterwards. Nonempty chat
 history is rejected because the current production AgentPort does not consume it.
 Do not claim chat-memory evaluation support or QA-09 closure from this limitation.
 

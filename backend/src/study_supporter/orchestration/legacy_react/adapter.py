@@ -1,4 +1,4 @@
-"""Request-local bridge around the unchanged legacy parser, prompts and tool loop."""
+"""Request-local bridge around the legacy ReAct loop."""
 
 import uuid
 import hashlib
@@ -57,8 +57,8 @@ class LegacyReActAdapter:
             raise EvidenceNotFound("Document not found")
         recorder = _EvidenceRecorder(self.retriever)
         tools = [RetrieveEvidenceTool(recorder, self.context), *self.tools_factory()]
-        known_tools = {tool.name for tool in tools}
-        state = ReActOrchestrator(self.llm, tools).run(request.question)
+        orchestrator = ReActOrchestrator(self.llm, tools)
+        state = orchestrator.run(request.question)
         return AgentResult(
             answer=state.final_answer or "",
             evidences=tuple(recorder.evidences.values()),
@@ -66,7 +66,9 @@ class LegacyReActAdapter:
             status=AgentStatus.COMPLETED if state.is_done else AgentStatus.INCOMPLETE,
             steps=state.iteration,
             tool_calls=tuple(
-                ToolCall(entry.tool_name if entry.tool_name in known_tools else "unknown_tool")
+                ToolCall(
+                    entry.tool_name if entry.tool_name in orchestrator.tools else "unknown_tool"
+                )
                 for entry in state.scratchpad
                 if entry.type == "action" and entry.tool_name
             ),

@@ -24,10 +24,8 @@ def main():
     from study_supporter.orchestration.legacy_react.tools.retrieve_evidence import (
         RetrieveEvidenceTool,
     )
-    from study_supporter.orchestration.legacy_react.tools.save_note import SaveNoteTool
     from study_supporter.orchestration.legacy_react.tools.get_progress import GetProgressTool
-    from study_supporter.application.use_cases.learning import SaveNoteUseCase, GetProgressUseCase
-    from study_supporter.infrastructure.persistence.chroma.note_repository import LongTermMemory
+    from study_supporter.application.use_cases.learning import GetProgressUseCase
     from study_supporter.infrastructure.retrieval.bm25_adapter import BM25Index
     from evaluation.eval_runner import load_eval_dataset, run_eval, save_results
 
@@ -54,7 +52,6 @@ def main():
         tools = [
             RetrieveEvidenceTool(services.retriever(), context),
             GenerateQuizTool(llm),
-            SaveNoteTool(SaveNoteUseCase(LongTermMemory(store, embed_query)), context.user_id),
             GetProgressTool(GetProgressUseCase(services.progress_repository), context.user_id),
         ]
         # The experimental comparison retains iteration/tool metrics and personalized history.

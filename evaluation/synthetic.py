@@ -101,7 +101,7 @@ class SyntheticEnvironment:
         return execute
 
     def prompt_hashes(self):
-        # The smoke uses a search-only prompt; it is not the production four-tool baseline.
+        # The structural golden uses a search-only prompt.
         prompt = ReActOrchestrator(
             _SyntheticLLM(self.top_k),
             [RetrieveEvidenceTool(self.retriever, AppContext("user_a", ("doc_a",)))],

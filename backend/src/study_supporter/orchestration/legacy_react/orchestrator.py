@@ -24,19 +24,22 @@ def _parse_action_input(raw: str) -> dict | None:
     literal (dict/list/str/số), không thực thi được code tùy ý.
     """
     try:
-        return json.loads(raw)
+        value = json.loads(raw)
     except json.JSONDecodeError:
         try:
-            return ast.literal_eval(raw)
-        except (ValueError, SyntaxError):
+            value = ast.literal_eval(raw)
+        except (ValueError, SyntaxError, TypeError):
             return None
+    if not isinstance(value, dict) or any(not isinstance(key, str) for key in value):
+        return None
+    return value
 
 
 class ReActOrchestrator:
     def __init__(self, llm: LLMAdapter, tools: list[BaseTool]):
         self.llm = llm
-        self.tools = {t.name: t for t in tools}
-        self.system_prompt = build_react_system_prompt(tools)
+        self.tools = {tool.name: tool for tool in tools if tool.read_only is True}
+        self.system_prompt = build_react_system_prompt(list(self.tools.values()))
 
     def parse_llm_output(self, text: str) -> dict:
         r"""
@@ -168,10 +171,8 @@ class ReActOrchestrator:
 
                 tool = self.tools.get(parsed["action"])
                 if tool is None:
-                    available = ", ".join(self.tools.keys())
                     observation = (
-                        f"Lỗi: tool '{parsed['action']}' không tồn tại. "
-                        f"Các tool khả dụng: {available}."
+                        "Lỗi: công cụ không khả dụng. Chọn công cụ đã liệt kê trong hướng dẫn."
                     )
                 else:
                     with timing("tool_round"):

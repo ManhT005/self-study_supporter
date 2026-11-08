@@ -107,7 +107,7 @@ def test_real_sql_clone_resets_progress_between_variants_and_repetitions(sql_sna
     fixture.verify()
 
 
-def test_pinned_variants_reuse_production_hybrid_and_full_four_tool_prompt(sql_snapshot):
+def test_pinned_variants_reuse_production_hybrid_and_read_only_tool_prompt(sql_snapshot):
     fixture = sql_snapshot
     llm = Mock()
     llm.usage = [{"input_tokens": 3, "output_tokens": 4}]
@@ -122,9 +122,8 @@ def test_pinned_variants_reuse_production_hybrid_and_full_four_tool_prompt(sql_s
         assert result.evidences[0].document_id == "doc_a"
         assert asdict(result.usage) == {"input_tokens": 3, "output_tokens": 4, "cost_usd": None}
         prompt = llm.chat.call_args.kwargs["system_prompt"]
-        assert all(
-            name in prompt for name in ("search_docs", "generate_quiz", "get_progress", "save_note")
-        )
+        assert all(name in prompt for name in ("search_docs", "generate_quiz", "get_progress"))
+        assert "save_note" not in prompt
         import hashlib
 
         assert hashlib.sha256(prompt.encode("utf-8")).hexdigest() == production_prompt_hash()

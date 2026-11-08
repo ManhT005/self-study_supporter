@@ -1,4 +1,4 @@
-"""Production use cases, hybrid retrieval and all four original ReAct tools."""
+"""Production use cases, hybrid retrieval and the read-only ReAct tools."""
 
 from dataclasses import replace
 
@@ -6,11 +6,10 @@ from evaluation.adapters.rag_only import RagOnlyAdapter
 from study_supporter.application.contracts.agent import AgentUsage
 from study_supporter.application.contracts.context import AppContext
 from study_supporter.application.contracts.learning import AnswerRequest
-from study_supporter.application.use_cases.learning import SaveNoteUseCase, GetProgressUseCase
+from study_supporter.application.use_cases.learning import GetProgressUseCase
 from study_supporter.domain.errors import EvidenceNotFound
 from study_supporter.orchestration.legacy_react.adapter import LegacyReActAdapter
 from study_supporter.orchestration.legacy_react.tools.generate_quiz import GenerateQuizTool
-from study_supporter.orchestration.legacy_react.tools.save_note import SaveNoteTool
 from study_supporter.orchestration.legacy_react.tools.get_progress import GetProgressTool
 
 
@@ -37,7 +36,7 @@ def validate_scope(factory, corpus, case):
 def execute_variant(factory, corpus, case, variant, llm, top_k=3):
     if variant not in {"rag_only", "legacy_react"}:
         raise ValueError("Unknown variant")
-    context, documents = validate_scope(factory, corpus, case)
+    context, _ = validate_scope(factory, corpus, case)
     if case.requires_history:
         history = corpus.history_fixtures.get(case.history_fixture)
         if (
@@ -57,17 +56,8 @@ def execute_variant(factory, corpus, case, variant, llm, top_k=3):
     retrieval = factory.retriever()
 
     def tools():
-        from study_supporter.infrastructure.persistence.chroma.note_repository import LongTermMemory
-
-        store = factory.vector_store(documents[0])
-        notes = SaveNoteUseCase(
-            LongTermMemory(
-                store, lambda text: factory.embedding.embed([text], "RETRIEVAL_QUERY")[0]
-            )
-        )
         return [
             GenerateQuizTool(llm),
-            SaveNoteTool(notes, context.user_id),
             GetProgressTool(GetProgressUseCase(factory.progress_repository), context.user_id),
         ]
 

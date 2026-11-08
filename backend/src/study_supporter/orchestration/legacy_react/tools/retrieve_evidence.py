@@ -4,6 +4,7 @@ from study_supporter.orchestration.legacy_react.tools.base import BaseTool
 
 class RetrieveEvidenceTool(BaseTool):
     name = "search_docs"
+    read_only = True
     description = "Tìm kiếm thông tin liên quan trong tài liệu học tập đã upload."
     param_descriptions = {
         "query": "Câu hỏi hoặc từ khóa cần tìm kiếm trong tài liệu",
